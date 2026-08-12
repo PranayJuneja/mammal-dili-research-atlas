@@ -1,6 +1,6 @@
 # Pre-performance precision assessment decision
 
-Date: 2026-08-13 (Asia/Calcutta)  
+Date: 2026-08-13 (Asia/Calcutta)
 Status: Accepted for estimation-focused execution; no protocol setting changed.
 
 This simulation was completed before any empirical model-performance result was inspected. It used the current 810-row cohort's observed 569-group size vector, including the largest 74-drug scaffold group, and generated five paired prediction sets per experiment.
