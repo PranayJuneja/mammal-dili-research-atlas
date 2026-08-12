@@ -1,0 +1,21 @@
+schema_version: 1
+checkpoint: "ibm-research/biomed.omics.bl.sm.ma-ted-458m"
+checkpoint_revision: "6d319d8dcf97f8821635327fc8cda24670553daa"
+code_repository: "https://github.com/BiomedSciAI/biomed-multi-alignment"
+code_revision: "8cc56e9494b489ca86a63b76fa4cd2921f8af7f7"
+prompt_prefix: "<@TOKENIZER-TYPE=SMILES><MOLECULAR_ENTITY><MOLECULAR_ENTITY_OF_TYPE_SMALL_MOL>"
+prompt_suffix: "<EOS>"
+hidden_state: "final encoder last_hidden_state"
+pooling: "attention-mask-aware mean over all non-padding prompt tokens, then L2 normalize"
+special_tokens: "included when attention mask is 1"
+max_sequence_length: 2100
+overlength_rule: "reject"
+dtype: "float32"
+device: "cpu"
+batch_size: 8
+repeatability_atol: 0.00001
+repeatability_rtol: 0.00001
+pilot_required_successes: 18
+pilot_total: 20
+full_cohort_minimum_coverage: 0.90
+failure_codes: ["TOKENIZATION_FAILURE", "OVERLENGTH", "NONFINITE_VECTOR", "DIMENSION_MISMATCH", "RUNTIME_FAILURE"]

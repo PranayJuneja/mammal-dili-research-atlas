@@ -1,0 +1,126 @@
+from __future__ import annotations
+
+import argparse
+import json
+
+from mammal_dili.acquisition.dilirank import acquire_dilirank
+from mammal_dili.acquisition.pubchem import resolve_pubchem
+from mammal_dili.chemistry.features import build_conventional_features
+from mammal_dili.curation.structures import create_review_packets, curate_cohort
+from mammal_dili.embeddings.mammal import extract_embeddings, select_blind_pilot, validate_pilot
+from mammal_dili.grouping.scaffolds import build_groups_and_folds
+from mammal_dili.lock import create_protocol_lock
+from mammal_dili.modelling.nested_cv import run_nested_cv
+from mammal_dili.statistics.estimate import estimate_results
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(prog="mammal-dili")
+    commands = root.add_subparsers(dest="command", required=True)
+
+    commands.add_parser("acquire")
+    commands.add_parser("resolve-pubchem")
+    commands.add_parser("curate")
+    commands.add_parser("make-review-packets")
+    commands.add_parser("build-features")
+    commands.add_parser("build-folds")
+    commands.add_parser("lock-protocol")
+    pilot_select = commands.add_parser("select-pilot")
+    pilot_select.add_argument("--total", type=int, default=20)
+    mammal = commands.add_parser("extract-mammal")
+    mammal.add_argument("--input", required=True)
+    mammal.add_argument("--output", required=True)
+    mammal.add_argument("--reverse-order", action="store_true")
+    commands.add_parser("validate-pilot")
+    commands.add_parser("cross-validate")
+    commands.add_parser("estimate")
+    return root
+
+
+def main() -> None:
+    args = parser().parse_args()
+    if args.command == "acquire":
+        result = acquire_dilirank("configs/sources.yaml", "data/interim/dilirank.csv")
+        print(f"Validated {len(result)} DILIrank records")
+    elif args.command == "resolve-pubchem":
+        result = resolve_pubchem(
+            "data/interim/dilirank.csv",
+            "configs/sources.yaml",
+            "data/interim/identity_resolution.csv",
+            "data/interim/pubchem_cache_v2.json",
+        )
+        print(result["identity_status"].value_counts().to_string())
+    elif args.command == "curate":
+        result = curate_cohort(
+            "data/interim/identity_resolution.csv",
+            "configs/curation.yaml",
+            "data/processed/cohort_audit.csv",
+        )
+        print(result["eligibility"].value_counts().to_string())
+    elif args.command == "make-review-packets":
+        result = create_review_packets(
+            "data/processed/cohort_audit.csv",
+            "configs/curation.yaml",
+            "configs/seeds.yaml",
+            "audit/reviews/phase-1",
+        )
+        print(json.dumps(result, indent=2))
+    elif args.command == "build-features":
+        print(
+            build_conventional_features(
+                "data/processed/cohort_audit.csv",
+                "configs/features.yaml",
+                "artifacts/features/conventional.npz",
+            )
+        )
+    elif args.command == "build-folds":
+        result = build_groups_and_folds(
+            "data/processed/cohort_audit.csv", "configs/folds.yaml", "artifacts/folds/outer_folds.csv"
+        )
+        print(f"Locked {len(result)} drugs across {result['scaffold_id'].nunique()} groups")
+    elif args.command == "lock-protocol":
+        print(json.dumps(create_protocol_lock(), indent=2))
+    elif args.command == "select-pilot":
+        result = select_blind_pilot(
+            "data/processed/cohort_audit.csv", "data/processed/mammal_pilot_blind.csv", args.total
+        )
+        print(f"Selected {len(result)} label-blind pilot molecules")
+    elif args.command == "extract-mammal":
+        print(
+            extract_embeddings(
+                args.input,
+                "configs/mammal_embedding.yaml",
+                args.output,
+                reverse_order=args.reverse_order,
+            )
+        )
+    elif args.command == "validate-pilot":
+        report = validate_pilot(
+            "artifacts/pilot/mammal_pilot_first.npz",
+            "artifacts/pilot/mammal_pilot_reordered.npz",
+            "configs/mammal_embedding.yaml",
+            "artifacts/pilot/pilot_report.json",
+        )
+        print(json.dumps(report, indent=2))
+        if not report["passed"]:
+            raise SystemExit(2)
+    elif args.command == "cross-validate":
+        result = run_nested_cv(
+            "artifacts/folds/outer_folds.csv",
+            "artifacts/features/conventional.npz",
+            "artifacts/features/mammal.npz",
+            "configs/analysis.yaml",
+            "artifacts/predictions/oof_predictions.csv",
+        )
+        print(f"Generated {len(result)} out-of-fold predictions")
+    elif args.command == "estimate":
+        result = estimate_results(
+            "artifacts/predictions/oof_predictions.csv",
+            "configs/analysis.yaml",
+            "artifacts/results/results.json",
+        )
+        print(json.dumps(result["primary"], indent=2))
+
+
+if __name__ == "__main__":
+    main()

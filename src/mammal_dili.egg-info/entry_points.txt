@@ -1,0 +1,2 @@
+[console_scripts]
+mammal-dili = mammal_dili.cli:main

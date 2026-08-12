@@ -1,0 +1,18 @@
+schema_version: 1
+dilirank:
+  canonical_url: "https://www.fda.gov/science-research/liver-toxicity-knowledge-base-ltkb/drug-induced-liver-injury-rank-dilirank-20-dataset"
+  snapshot_path: "data/raw/dilirank_2_0_fda_page.md"
+  snapshot_transport: "https://r.jina.ai/http://www.fda.gov/science-research/liver-toxicity-knowledge-base-ltkb/drug-induced-liver-injury-rank-dilirank-20-dataset"
+  expected_records: 1336
+  expected_labels:
+    vMost-DILI-concern: 217
+    vLess-DILI-concern: 351
+    vNo-DILI-concern: 414
+    Ambiguous-DILI-concern: 354
+  licence: "United States Government work; FDA website content is generally public domain"
+pubchem:
+  property_endpoint: "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{name}/property/Title,IsomericSMILES,CanonicalSMILES,InChI,InChIKey,MolecularFormula,MolecularWeight/JSON"
+  requests_per_second: 4
+  timeout_seconds: 30
+  retries: 3
+  licence_url: "https://pubchem.ncbi.nlm.nih.gov/docs/downloads#section=License"

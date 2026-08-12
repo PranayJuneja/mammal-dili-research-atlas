@@ -1,0 +1,35 @@
+schema_version: 1
+outcome_include: ["vMost-DILI-concern", "vLess-DILI-concern", "vNo-DILI-concern"]
+positive_labels: ["vMost-DILI-concern", "vLess-DILI-concern"]
+negative_labels: ["vNo-DILI-concern"]
+parent_selection: "rdMolStandardize.FragmentParent"
+preserve_stereochemistry: true
+tautomer_canonicalization: false
+max_molecular_weight: 2000.0
+max_heavy_atoms: 160
+peptide_min_amide_bonds: 6
+peptide_min_molecular_weight: 700.0
+duplicate_policy: "retain-lowest-ltkbid-if-labels-agree-exclude-conflicts"
+review_fraction: 0.10
+exclusion_codes:
+  - AMBIGUOUS_OUTCOME
+  - BIOLOGIC_OR_MACROMOLECULE
+  - MIXTURE_OR_COMBINATION
+  - POLYMER_OR_UNRESOLVED_INORGANIC
+  - IDENTITY_UNRESOLVED
+  - STRUCTURE_UNAVAILABLE
+  - STRUCTURE_PARSE_FAILURE
+  - DUPLICATE_PARENT
+  - DUPLICATE_LABEL_CONFLICT
+  - MAMMAL_UNPROCESSABLE
+  - OTHER_PREDEFINED
+manual_exclusions:
+  LT00805: "IDENTITY_UNRESOLVED: resin complex cannot be represented by the fallback phentermine parent"
+  LT00349: "BIOLOGIC_OR_MACROMOLECULE: protirelin is a tripeptide therapeutic"
+  LT00669: "BIOLOGIC_OR_MACROMOLECULE: romidepsin is a cyclic depsipeptide"
+  LT01125: "BIOLOGIC_OR_MACROMOLECULE: fondaparinux is a sulfated oligosaccharide rather than a small-molecule study unit"
+  LT01316: "BIOLOGIC_OR_MACROMOLECULE: epoetin alfa is a biologic and the PubChem record is not the therapeutic protein"
+  LT01426: "BIOLOGIC_OR_MACROMOLECULE: heparin sodium is a heterogeneous polysaccharide represented only by a fragment"
+  LT02395: "BIOLOGIC_OR_MACROMOLECULE: carfilzomib is a tetrapeptide epoxyketone"
+  LT03659: "BIOLOGIC_OR_MACROMOLECULE: difelikefalin is a peptide therapeutic"
+  LT03910: "BIOLOGIC_OR_MACROMOLECULE: gallium ga-68 gozetotide is a radiolabelled peptide"

@@ -1,0 +1,19 @@
+schema_version: 1
+models:
+  A: [descriptors]
+  B: [descriptors, morgan]
+  C: [mammal]
+  D: [descriptors, morgan, mammal]
+classifier: "L2 logistic regression"
+solver: "liblinear"
+max_iterations: 5000
+regularization_grid: [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+class_weight: null
+primary_metric: "AUROC"
+primary_contrast: "D-B"
+practical_gain: 0.03
+threshold: "training-fold Youden"
+sensitivity_target: 0.80
+bootstrap_resamples: 2000
+bootstrap_seed: 120900
+

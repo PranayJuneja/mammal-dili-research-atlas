@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "LOCKED_FOR_EXECUTION",
+  "locked_at_utc": "2026-08-12T18:03:51.162010+00:00",
+  "protocol_baseline_revision": "0b16bd9c903dfaf1088dca8ad198c351db7fa1b7",
+  "implementation_revision_at_lock": "0b16bd9c903dfaf1088dca8ad198c351db7fa1b7",
+  "config_bundle_sha256": "d93d740d0d211b2fab139ad79c66b2ad16a44d5a4baa9a17ec7968af60e9285e",
+  "config_files": [
+    "analysis.yaml",
+    "curation.yaml",
+    "features.yaml",
+    "folds.yaml",
+    "mammal_embedding.yaml",
+    "seeds.yaml",
+    "sources.yaml"
+  ],
+  "governance_evidence": "audit\\governance\\2026-08-12-user-reported-clearance.md",
+  "governance_evidence_sha256": "578b47fb6607c19e7f8c84e83af2d811f4c71b205076159fbe259a23b55ea797",
+  "python": "3.12.13",
+  "platform": "Windows-11-10.0.26200-SP0"
+}

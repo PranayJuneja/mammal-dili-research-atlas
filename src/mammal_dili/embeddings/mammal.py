@@ -1,0 +1,248 @@
+from __future__ import annotations
+
+import platform
+import time
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from mammal_dili.config import validate_config
+from mammal_dili.io import sha256_file, write_json
+
+
+def make_prompt(smiles: str, config: dict) -> str:
+    return f"{config['prompt_prefix']}{smiles}{config['prompt_suffix']}"
+
+
+def masked_mean_l2(hidden, attention_mask, torch):
+    """Pool non-padding encoder states and L2-normalise each row."""
+    expanded_mask = attention_mask.unsqueeze(-1).to(dtype=hidden.dtype)
+    denominator = expanded_mask.sum(dim=1).clamp_min(1.0)
+    pooled = (hidden * expanded_mask).sum(dim=1) / denominator
+    return torch.nn.functional.normalize(pooled, p=2, dim=1)
+
+
+def select_blind_pilot(cohort_path: str | Path, output_path: str | Path, total: int = 20) -> pd.DataFrame:
+    del cohort_path
+    fixtures = [
+        ("PILOT-01", "CCO", "small neutral acyclic"),
+        ("PILOT-02", "CC(=O)Oc1ccccc1C(=O)O", "ordinary aromatic drug-like"),
+        ("PILOT-03", "O=C([O-])c1ccccc1", "negative formal charge"),
+        ("PILOT-04", "C[N+](C)(C)CCO", "positive formal charge"),
+        ("PILOT-05", "N[C@@H](C)C(=O)O", "defined stereocentre"),
+        ("PILOT-06", "N[C@H](C)C(=O)O", "stereoisomer pair"),
+        ("PILOT-07", "C1CCCCCCCCCCC1", "macrocycle"),
+        ("PILOT-08", "c1ccc2cc3ccccc3cc2c1", "fused aromatic rings"),
+        ("PILOT-09", "Ic1ccccc1Br", "uncommon supported halogens"),
+        ("PILOT-10", "COP(=O)(O)O", "phosphorus-containing molecule"),
+        ("PILOT-11", "C[Se]C", "selenium-containing molecule"),
+        ("PILOT-12", "C1=CC=[N+](C=C1)[O-]", "zwitterionic charge pattern"),
+        ("PILOT-13", "CC(C)(C)C(=O)O", "branched acyclic molecule"),
+        ("PILOT-14", "C1CC2CCC1C2", "bridged ring system"),
+        ("PILOT-15", "O=C1NCC(=O)N1", "small cyclic amide"),
+        ("PILOT-16", "CC(=O)O", "parent selected from a salt source"),
+        ("PILOT-17", "C[C@H](O)[C@@H](O)CO", "multiple stereocentres"),
+        ("PILOT-18", "C1=CC=C(C=C1)S(=O)(=O)N", "sulfur-containing aromatic"),
+        ("PILOT-19", "N#CC1=NC=CC=C1", "heteroaromatic nitrile"),
+        ("PILOT-20", "C" * 1900, "valid structure near configured tokenizer length limit"),
+    ]
+    if total != 20:
+        raise ValueError("The frozen pilot contract requires exactly 20 structures")
+    pilot = pd.DataFrame(fixtures, columns=["drug_id", "standardised_isomeric_smiles", "selection_rationale"])
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    pilot.to_csv(target, index=False)
+    return pilot
+
+
+def _load_runtime(config: dict):
+    import torch
+    from fuse.data.tokenizers.modular_tokenizer.op import ModularTokenizerOp
+    from huggingface_hub import snapshot_download
+    from mammal.model import Mammal
+
+    snapshot = snapshot_download(
+        repo_id=config["checkpoint"],
+        revision=config["checkpoint_revision"],
+    )
+    model = Mammal.from_pretrained(
+        pretrained_model_name_or_path=snapshot,
+        allow_config_mismatch=True,
+        strict=False,
+    )
+    model.eval()
+    model = model.to(device=torch.device(config["device"]), dtype=torch.float32)
+    tokenizer = ModularTokenizerOp.from_pretrained(snapshot)
+    return torch, model, tokenizer, Path(snapshot)
+
+
+def extract_embeddings(
+    input_path: str | Path,
+    config_path: str | Path,
+    output_path: str | Path,
+    reverse_order: bool = False,
+) -> Path:
+    config = validate_config(config_path)
+    frame = pd.read_csv(input_path)
+    required = {"drug_id", "standardised_isomeric_smiles"}
+    if not required.issubset(frame.columns):
+        raise ValueError(f"Input must include {sorted(required)}")
+    if reverse_order:
+        frame = frame.iloc[::-1].reset_index(drop=True)
+    torch, model, tokenizer, snapshot = _load_runtime(config)
+    embeddings: list[np.ndarray] = []
+    token_counts: list[int] = []
+    failures: list[dict] = []
+    started = time.perf_counter()
+    try:
+        import psutil
+
+        process = psutil.Process()
+        peak_rss = process.memory_info().rss
+    except ImportError:
+        process = None
+        peak_rss = None
+    batch_size = int(config["batch_size"])
+    with torch.inference_mode():
+        for start in range(0, len(frame), batch_size):
+            batch = frame.iloc[start : start + batch_size]
+            token_ids: list[list[int]] = []
+            masks: list[list[int]] = []
+            valid_indices: list[int] = []
+            for local_index, row in enumerate(batch.to_dict(orient="records")):
+                prompt = make_prompt(row["standardised_isomeric_smiles"], config)
+                tokenized = tokenizer(
+                    {"text": prompt},
+                    key_in="text",
+                    key_out_tokens_ids="input_ids",
+                    key_out_attention_mask="attention_mask",
+                )
+                ids = tokenized["input_ids"]
+                mask = tokenized["attention_mask"]
+                ids = ids.tolist() if hasattr(ids, "tolist") else list(ids)
+                mask = mask.tolist() if hasattr(mask, "tolist") else list(mask)
+                if len(ids) > int(config["max_sequence_length"]):
+                    failures.append({"drug_id": row["drug_id"], "reason": "OVERLENGTH", "tokens": len(ids)})
+                    continue
+                token_ids.append(ids)
+                masks.append(mask)
+                valid_indices.append(local_index)
+            if not token_ids:
+                continue
+            max_len = max(map(len, token_ids))
+            padded_ids = [ids + [0] * (max_len - len(ids)) for ids in token_ids]
+            padded_masks = [mask + [0] * (max_len - len(mask)) for mask in masks]
+            ids_tensor = torch.tensor(padded_ids, dtype=torch.long, device=config["device"])
+            mask_tensor = torch.tensor(padded_masks, dtype=torch.long, device=config["device"])
+            inputs = model._calculate_inputs_embeddings(
+                {
+                    "data.encoder_input_token_ids": ids_tensor,
+                    "data.encoder_input_attention_mask": mask_tensor,
+                }
+            )
+            encoded = model.t5_model.encoder(inputs_embeds=inputs, attention_mask=mask_tensor)
+            hidden = encoded.last_hidden_state
+            pooled = masked_mean_l2(hidden, mask_tensor, torch)
+            embeddings.extend(pooled.cpu().numpy().astype(np.float32))
+            token_counts.extend([sum(mask) for mask in masks])
+            if process is not None:
+                peak_rss = max(int(peak_rss or 0), process.memory_info().rss)
+    elapsed = time.perf_counter() - started
+    if failures:
+        failed_ids = {failure["drug_id"] for failure in failures}
+        frame = frame[~frame["drug_id"].isin(failed_ids)].reset_index(drop=True)
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        target,
+        drug_ids=frame["drug_id"].to_numpy(dtype=str),
+        embeddings=np.asarray(embeddings, dtype=np.float32),
+        token_counts=np.asarray(token_counts, dtype=np.int32),
+    )
+    model_files = sorted(snapshot.rglob("*.safetensors"))
+    tokenizer_files = sorted(
+        path
+        for path in snapshot.rglob("*")
+        if path.is_file() and any(term in path.name.casefold() for term in ("token", "vocab", "merges"))
+    )
+    environment_locks = [Path("environment/mammal-lock.txt"), Path("environment/chemistry-lock.txt")]
+    write_json(
+        target.with_suffix(".manifest.json"),
+        {
+            "checkpoint": config["checkpoint"],
+            "checkpoint_revision": config["checkpoint_revision"],
+            "checkpoint_snapshot": str(snapshot),
+            "model_files": {
+                str(path.relative_to(snapshot)): {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+                for path in model_files
+            },
+            "model_total_bytes": sum(path.stat().st_size for path in model_files),
+            "tokenizer_files": {
+                str(path.relative_to(snapshot)): {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+                for path in tokenizer_files
+            },
+            "tokenizer_revision": config["checkpoint_revision"],
+            "code_revision": config["code_revision"],
+            "prompt_prefix": config["prompt_prefix"],
+            "prompt_suffix": config["prompt_suffix"],
+            "hidden_state": config["hidden_state"],
+            "pooling": config["pooling"],
+            "special_tokens": config["special_tokens"],
+            "max_sequence_length": config["max_sequence_length"],
+            "overlength_rule": config["overlength_rule"],
+            "dtype": config["dtype"],
+            "device": config["device"],
+            "batch_size": batch_size,
+            "cpu_model": platform.processor() or platform.machine(),
+            "observed_peak_process_rss_bytes": peak_rss,
+            "python": platform.python_version(),
+            "torch": torch.__version__,
+            "environment_locks": {
+                str(path): sha256_file(path) for path in environment_locks if path.exists()
+            },
+            "rows_requested": len(pd.read_csv(input_path)),
+            "rows_successful": len(frame),
+            "embedding_dimension": int(np.asarray(embeddings).shape[1]),
+            "elapsed_seconds": elapsed,
+            "token_count_min": min(token_counts, default=None),
+            "token_count_max": max(token_counts, default=None),
+            "configured_failure_codes": config["failure_codes"],
+            "failures": failures,
+            "output_sha256": sha256_file(target),
+        },
+    )
+    return target
+
+
+def validate_pilot(first_path: str | Path, second_path: str | Path, config_path: str | Path, report_path: str | Path) -> dict:
+    config = validate_config(config_path)
+    first = np.load(first_path)
+    second = np.load(second_path)
+    first_map = dict(zip(first["drug_ids"], first["embeddings"], strict=True))
+    second_map = dict(zip(second["drug_ids"], second["embeddings"], strict=True))
+    common = sorted(set(first_map) & set(second_map))
+    differences = [float(np.max(np.abs(first_map[key] - second_map[key]))) for key in common]
+    finite = all(np.isfinite(first_map[key]).all() and np.isfinite(second_map[key]).all() for key in common)
+    repeatable = all(
+        np.allclose(
+            first_map[key],
+            second_map[key],
+            atol=float(config["repeatability_atol"]),
+            rtol=float(config["repeatability_rtol"]),
+        )
+        for key in common
+    )
+    passed = len(common) >= int(config["pilot_required_successes"]) and finite and repeatable
+    report = {
+        "passed": passed,
+        "successful_in_both": len(common),
+        "required_successes": int(config["pilot_required_successes"]),
+        "finite": finite,
+        "repeatable": repeatable,
+        "maximum_absolute_difference": max(differences, default=None),
+        "first_output_sha256": sha256_file(first_path),
+        "second_output_sha256": sha256_file(second_path),
+    }
+    write_json(report_path, report)
+    return report
