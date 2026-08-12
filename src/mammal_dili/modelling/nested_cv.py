@@ -18,6 +18,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from mammal_dili.config import validate_config
+from mammal_dili.gates import G3_PATH, require_feature_fold_lock
 from mammal_dili.io import sha256_file, write_json
 from mammal_dili.lock import require_protocol_lock
 
@@ -37,6 +38,18 @@ def split_development_and_update(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.
     if len(development) + len(update) != len(frame):
         raise AssertionError("Unrecognised release-group value")
     return development, update
+
+
+def validation_group_vectors(
+    frame: pd.DataFrame, validation_design: str
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return (chemical groups for reporting/bootstrap, groups used for splitting)."""
+    chemical_groups = frame["scaffold_id"].astype(str).to_numpy()
+    if validation_design == "scaffold_grouped":
+        return chemical_groups, chemical_groups
+    if validation_design == "stratified_random":
+        return chemical_groups, frame["drug_id"].astype(str).to_numpy()
+    raise ValueError(f"Unknown validation design: {validation_design}")
 
 
 def _matrix_map(path: str | Path, key: str) -> dict[str, np.ndarray]:
@@ -175,7 +188,17 @@ def run_nested_cv(
     class_weight_mode: str = "primary",
 ) -> pd.DataFrame:
     protocol_lock = require_protocol_lock()
+    g3 = require_feature_fold_lock()
     config = validate_config(config_path)
+    expected_hashes = g3["source_hashes"]
+    actual_inputs = {
+        "development_folds": sha256_file(folds_path),
+        "conventional": sha256_file(conventional_path),
+        "mammal": sha256_file(mammal_path),
+    }
+    for name, actual in actual_inputs.items():
+        if actual != expected_hashes[name]:
+            raise AssertionError(f"Nested CV input is not the G3-locked {name} artifact")
     if class_weight_mode == "balanced_robustness":
         config["class_weight"] = config["robustness_class_weight"]
     elif class_weight_mode != "primary":
@@ -199,10 +222,8 @@ def run_nested_cv(
         raise ValueError(f"Unknown analysis population: {population}")
     drug_ids = frame["drug_id"].astype(str).tolist()
     y = frame["outcome"].astype(int).to_numpy()
-    if validation_design == "scaffold_grouped":
-        groups = frame["scaffold_id"].astype(str).to_numpy()
-    elif validation_design == "stratified_random":
-        groups = frame["drug_id"].astype(str).to_numpy()
+    chemical_groups, split_groups = validation_group_vectors(frame, validation_design)
+    if validation_design == "stratified_random":
         for repeat, seed in enumerate(folds_config["seeds"]):
             column = f"random_outer_fold_repeat_{repeat}"
             frame[column] = -1
@@ -213,8 +234,6 @@ def run_nested_cv(
             )
             for fold, (_, test_indices) in enumerate(splitter.split(frame, y)):
                 frame.loc[test_indices, column] = fold
-    else:
-        raise ValueError(f"Unknown validation design: {validation_design}")
     outputs = []
     tuning_log = []
     fold_prefix = (
@@ -236,7 +255,7 @@ def run_nested_cv(
                     feature_set,
                     train_indices,
                     y,
-                    groups,
+                    split_groups,
                     config,
                     seed=int(seeds["inner_cv_base"]) + repeat * 10 + int(outer_fold),
                 )
@@ -256,7 +275,7 @@ def run_nested_cv(
                             "compound_name_source": frame.loc[index, "compound_name_source"],
                             "dili_category": frame.loc[index, "dili_category"],
                             "outcome": int(y[index]),
-                            "scaffold_id": groups[index],
+                            "scaffold_id": chemical_groups[index],
                             "release_group": frame.loc[index, "release_group"],
                             "model": model_name,
                             "repeat": repeat,
@@ -314,6 +333,11 @@ def run_nested_cv(
             "conventional_features_sha256": sha256_file(conventional_path),
             "mammal_features_sha256": sha256_file(mammal_path),
             "prediction_sha256": sha256_file(target),
+            "output_sha256": sha256_file(target),
+            "tuning_sha256": sha256_file(target.with_suffix(".tuning.json")),
+            "config_file_sha256": sha256_file(config_path),
+            "g3_feature_lock_sha256": sha256_file(G3_PATH),
+            "implementation_revision": protocol_lock["implementation_revision_at_lock"],
             "protocol_lock_sha256": sha256_file("audit/protocol_lock/execution_lock.json"),
             "protocol_config_bundle_sha256": protocol_lock["config_bundle_sha256"],
         },
@@ -322,7 +346,8 @@ def run_nested_cv(
 
 
 def run_update_transport(
-    folds_path: str | Path,
+    development_folds_path: str | Path,
+    update_groups_path: str | Path,
     conventional_path: str | Path,
     mammal_path: str | Path,
     development_predictions_path: str | Path,
@@ -331,36 +356,88 @@ def run_update_transport(
 ) -> pd.DataFrame:
     """Fit once on the original-list development cohort and evaluate the untouched update cohort."""
     protocol_lock = require_protocol_lock()
+    g3 = require_feature_fold_lock()
     config = validate_config(config_path)
+    expected_hashes = g3["source_hashes"]
+    actual_inputs = {
+        "development_folds": sha256_file(development_folds_path),
+        "update_groups": sha256_file(update_groups_path),
+        "conventional": sha256_file(conventional_path),
+        "mammal": sha256_file(mammal_path),
+    }
+    for name, actual in actual_inputs.items():
+        if actual != expected_hashes[name]:
+            raise AssertionError(f"Update evaluation input is not the G3-locked {name} artifact")
     seeds = validate_config("configs/seeds.yaml")
     config = {**config, "classifier_seed": seeds["classifier"]}
-    frame = pd.read_csv(folds_path)
+    development = pd.read_csv(development_folds_path)
+    if set(development["release_group"]) != {config["development_release_group"]}:
+        raise AssertionError("Development fold artefact contains non-original rows")
     conventional_ids = set(np.load(conventional_path)["drug_ids"].astype(str))
     mammal_ids = set(np.load(mammal_path)["drug_ids"].astype(str))
-    frame = frame[frame["drug_id"].astype(str).isin(conventional_ids & mammal_ids)].copy()
-    development, update = split_development_and_update(frame)
-    development = development.reset_index(drop=True)
-    update = update.reset_index(drop=True)
+    common = conventional_ids & mammal_ids
+    development = development[development["drug_id"].astype(str).isin(common)].reset_index(drop=True)
     predictions = pd.read_csv(development_predictions_path)
-    if set(predictions["drug_id"].astype(str)) != set(development["drug_id"].astype(str)):
+    development_ids = development["drug_id"].astype(str).tolist()
+    models = ["A", "B", "C", "D"]
+    repeats = list(range(5))
+    outer_folds = list(range(5))
+    if set(predictions["drug_id"].astype(str)) != set(development_ids):
         raise AssertionError("Development OOF predictions do not exactly match original-list cohort")
     if set(predictions["release_group"]) != {"original-list"}:
         raise AssertionError("Update-cohort rows leaked into development predictions")
+    prediction_keys = predictions[["drug_id", "model", "repeat"]]
+    if (
+        len(predictions) != len(development) * len(models) * len(repeats)
+        or prediction_keys.duplicated().any()
+        or set(predictions["model"]) != set(models)
+        or set(predictions["repeat"].astype(int)) != set(repeats)
+    ):
+        raise AssertionError("Primary development prediction coverage is not exact 4-model x 5-repeat")
     tuning_path = Path(development_predictions_path).with_suffix(".tuning.json")
+    development_manifest_path = Path(development_predictions_path).with_suffix(".manifest.json")
+    development_manifest = json.loads(development_manifest_path.read_text(encoding="utf-8"))
+    if development_manifest.get("prediction_sha256") != sha256_file(development_predictions_path):
+        raise AssertionError("Development prediction manifest does not bind the current predictions")
+    if development_manifest.get("tuning_sha256") != sha256_file(tuning_path):
+        raise AssertionError("Development tuning artifact is stale or unrelated")
+    if development_manifest.get("g3_feature_lock_sha256") != sha256_file(G3_PATH):
+        raise AssertionError("Development predictions were not generated from the accepted G3 lock")
     tuning = json.loads(tuning_path.read_text(encoding="utf-8"))
+    tuning_keys = {
+        (str(row["model"]), int(row["repeat"]), int(row["outer_fold"]))
+        for row in tuning
+    }
+    expected_tuning_keys = {
+        (model, repeat, fold)
+        for model in models
+        for repeat in repeats
+        for fold in outer_folds
+    }
+    if len(tuning) != len(expected_tuning_keys) or tuning_keys != expected_tuning_keys:
+        raise AssertionError("Primary tuning must have unique complete 4-model x 5-repeat x 5-fold coverage")
+    if any(float(row["selected_c"]) not in config["regularization_grid"] for row in tuning):
+        raise AssertionError("Primary tuning selected C outside the locked grid")
+
+    # Only after the complete development prediction/tuning contract passes may update outcomes load.
+    update = pd.read_csv(update_groups_path)
+    if set(update["release_group"]) != {config["update_release_group"]}:
+        raise AssertionError("Update group artefact contains non-update rows")
+    update = update[update["drug_id"].astype(str).isin(common)].reset_index(drop=True)
     outputs = []
     selected = {}
-    for model_name in ["A", "B", "C", "D"]:
+    for model_name in models:
         model_tuning = [row for row in tuning if row["model"] == model_name]
+        if len(model_tuning) != int(config["required_outer_selection_count"]):
+            raise AssertionError(f"Expected {config['required_outer_selection_count']} tuning selections for {model_name}")
         counts = pd.Series([float(row["selected_c"]) for row in model_tuning]).value_counts()
         most_frequent = counts[counts == counts.max()].index.astype(float).tolist()
         selected_c = min(most_frequent)
         selected[model_name] = {
-            "rule": "modal outer-fold selected C; ties choose smaller C (stronger regularisation)",
+            "rule": config["final_hyperparameter_rule"],
             "C": selected_c,
             "outer_selection_counts": {str(key): int(value) for key, value in counts.items()},
         }
-        development_ids = development["drug_id"].astype(str).tolist()
         update_ids = update["drug_id"].astype(str).tolist()
         all_ids = development_ids + update_ids
         feature_set = load_feature_set(model_name, all_ids, conventional_path, mammal_path)
@@ -420,10 +497,15 @@ def run_update_transport(
             "selected_hyperparameters": selected,
             "development_predictions_sha256": sha256_file(development_predictions_path),
             "development_tuning_sha256": sha256_file(tuning_path),
-            "folds_sha256": sha256_file(folds_path),
+            "development_manifest_sha256": sha256_file(development_manifest_path),
+            "development_folds_sha256": sha256_file(development_folds_path),
+            "update_groups_sha256": sha256_file(update_groups_path),
             "conventional_features_sha256": sha256_file(conventional_path),
             "mammal_features_sha256": sha256_file(mammal_path),
             "output_sha256": sha256_file(target),
+            "config_file_sha256": sha256_file(config_path),
+            "g3_feature_lock_sha256": sha256_file(G3_PATH),
+            "implementation_revision": protocol_lock["implementation_revision_at_lock"],
             "protocol_lock_sha256": sha256_file("audit/protocol_lock/execution_lock.json"),
             "protocol_config_bundle_sha256": protocol_lock["config_bundle_sha256"],
         },

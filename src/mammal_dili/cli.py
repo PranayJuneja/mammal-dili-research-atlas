@@ -16,7 +16,11 @@ from mammal_dili.embeddings.mammal import (
     validate_full_extraction,
     validate_pilot,
 )
-from mammal_dili.grouping.scaffolds import build_groups_and_folds
+from mammal_dili.gates import create_feature_fold_lock, create_prediction_lock
+from mammal_dili.grouping.scaffolds import (
+    build_analysis_groups_and_folds,
+    build_groups_and_folds,
+)
 from mammal_dili.lock import create_protocol_lock
 from mammal_dili.modelling.nested_cv import run_nested_cv, run_update_transport
 from mammal_dili.reporting.report import generate_research_report
@@ -34,6 +38,7 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("make-review-packets")
     commands.add_parser("build-features")
     commands.add_parser("build-folds")
+    commands.add_parser("build-analysis-folds")
     commands.add_parser("lock-protocol")
     pilot_select = commands.add_parser("select-pilot")
     pilot_select.add_argument("--total", type=int, default=20)
@@ -46,6 +51,8 @@ def parser() -> argparse.ArgumentParser:
     mammal.add_argument("--reverse-order", action="store_true")
     commands.add_parser("validate-pilot")
     commands.add_parser("validate-full-extraction")
+    commands.add_parser("freeze-g3")
+    commands.add_parser("freeze-g4")
     commands.add_parser("cross-validate")
     commands.add_parser("cross-validate-vmost")
     commands.add_parser("cross-validate-random")
@@ -102,6 +109,17 @@ def main() -> None:
             "data/processed/cohort_audit.csv", "configs/folds.yaml", "artifacts/folds/outer_folds.csv"
         )
         print(f"Locked {len(result)} drugs across {result['scaffold_id'].nunique()} groups")
+    elif args.command == "build-analysis-folds":
+        development, update = build_analysis_groups_and_folds(
+            "data/processed/cohort_audit.csv",
+            "configs/folds.yaml",
+            "artifacts/folds/development_folds.csv",
+            "artifacts/folds/update_groups.csv",
+        )
+        print(
+            f"Locked {len(development)} development drugs without influence from "
+            f"{len(update)} separately grouped update drugs"
+        )
     elif args.command == "lock-protocol":
         print(json.dumps(create_protocol_lock(), indent=2))
     elif args.command == "select-pilot":
@@ -152,6 +170,7 @@ def main() -> None:
     elif args.command == "validate-full-extraction":
         report = validate_full_extraction(
             "data/processed/mammal_full_blind.csv",
+            "data/processed/mammal_verification_sample.csv",
             "artifacts/features/mammal.npz",
             "artifacts/features/mammal_verification_repeat.npz",
             "configs/mammal_embedding.yaml",
@@ -160,9 +179,15 @@ def main() -> None:
         print(json.dumps(report, indent=2))
         if not report["passed"]:
             raise SystemExit(2)
+    elif args.command == "freeze-g3":
+        report = create_feature_fold_lock()
+        print(f"Created G3 lock for {report['counts']['full_feature_rows']} common-complete drugs")
+    elif args.command == "freeze-g4":
+        report = create_prediction_lock()
+        print(f"Created G4 lock for {len(report['prediction_contracts'])} frozen analyses")
     elif args.command == "cross-validate":
         result = run_nested_cv(
-            "artifacts/folds/outer_folds.csv",
+            "artifacts/folds/development_folds.csv",
             "artifacts/features/conventional.npz",
             "artifacts/features/mammal.npz",
             "configs/analysis.yaml",
@@ -171,7 +196,7 @@ def main() -> None:
         print(f"Generated {len(result)} out-of-fold predictions")
     elif args.command == "cross-validate-vmost":
         result = run_nested_cv(
-            "artifacts/folds/outer_folds.csv",
+            "artifacts/folds/development_folds.csv",
             "artifacts/features/conventional.npz",
             "artifacts/features/mammal.npz",
             "configs/analysis.yaml",
@@ -182,7 +207,7 @@ def main() -> None:
         print(f"Generated {len(result)} vMost-versus-vNo sensitivity predictions")
     elif args.command == "cross-validate-random":
         result = run_nested_cv(
-            "artifacts/folds/outer_folds.csv",
+            "artifacts/folds/development_folds.csv",
             "artifacts/features/conventional.npz",
             "artifacts/features/mammal.npz",
             "configs/analysis.yaml",
@@ -193,7 +218,7 @@ def main() -> None:
         print(f"Generated {len(result)} optimistic random-split robustness predictions")
     elif args.command == "cross-validate-balanced":
         result = run_nested_cv(
-            "artifacts/folds/outer_folds.csv",
+            "artifacts/folds/development_folds.csv",
             "artifacts/features/conventional.npz",
             "artifacts/features/mammal.npz",
             "configs/analysis.yaml",
@@ -215,6 +240,7 @@ def main() -> None:
             "configs/analysis.yaml",
             "artifacts/results/vmost_vno_results.json",
             analysis_label="pre-specified vMost-versus-vNo sensitivity analysis",
+            analysis_key="vmost_vs_vno",
         )
         print(json.dumps(result["primary"], indent=2))
     elif args.command == "estimate-random":
@@ -223,6 +249,7 @@ def main() -> None:
             "configs/analysis.yaml",
             "artifacts/results/random_split_results.json",
             analysis_label="pre-specified optimistic stratified-random robustness analysis",
+            analysis_key="stratified_random",
         )
         print(json.dumps(result["primary"], indent=2))
     elif args.command == "estimate-balanced":
@@ -231,11 +258,13 @@ def main() -> None:
             "configs/analysis.yaml",
             "artifacts/results/balanced_results.json",
             analysis_label="pre-specified class-balanced logistic-regression robustness analysis",
+            analysis_key="class_balanced",
         )
         print(json.dumps(result["primary"], indent=2))
     elif args.command == "evaluate-update":
         result = run_update_transport(
-            "artifacts/folds/outer_folds.csv",
+            "artifacts/folds/development_folds.csv",
+            "artifacts/folds/update_groups.csv",
             "artifacts/features/conventional.npz",
             "artifacts/features/mammal.npz",
             "artifacts/predictions/oof_predictions.csv",
@@ -255,7 +284,9 @@ def main() -> None:
     elif args.command == "generate-report":
         result = generate_research_report(
             "data/processed/cohort_audit.csv",
+            "artifacts/folds/development_folds.csv",
             "artifacts/folds/outer_folds.csv",
+            "artifacts/folds/update_groups.csv",
             "artifacts/predictions/oof_predictions.csv",
             "artifacts/results/results.json",
             "artifacts/results/update_results.json",

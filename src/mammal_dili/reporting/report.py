@@ -8,7 +8,23 @@ import pandas as pd
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import precision_recall_curve, roc_curve
 
+from mammal_dili.gates import (
+    G3_PATH,
+    G4_PATH,
+    PREDICTION_PATHS,
+    require_feature_fold_lock,
+    require_prediction_lock,
+)
 from mammal_dili.io import sha256_file, write_json
+from mammal_dili.lock import LOCK_PATH
+
+RESULT_PATHS = {
+    "primary": Path("artifacts/results/results.json"),
+    "update_transport": Path("artifacts/results/update_results.json"),
+    "vmost_vs_vno": Path("artifacts/results/vmost_vno_results.json"),
+    "stratified_random": Path("artifacts/results/random_split_results.json"),
+    "class_balanced": Path("artifacts/results/balanced_results.json"),
+}
 
 
 def _load_json(path: str | Path) -> dict:
@@ -90,32 +106,93 @@ def _curve_data(predictions: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, 
     return pd.DataFrame(roc_rows), pd.DataFrame(pr_rows), pd.DataFrame(calibration_rows)
 
 
-def _important_false_negatives(predictions: pd.DataFrame) -> pd.DataFrame:
+def _important_false_negatives(predictions: pd.DataFrame, cohort: pd.DataFrame) -> pd.DataFrame:
     important = predictions[predictions["dili_category"].str.startswith("vMost")].copy()
     important["classified_negative"] = (
         important["predicted_probability"] < important["youden_threshold"]
     )
+    important["below_sensitivity_threshold"] = (
+        important["predicted_probability"] < important["sensitivity_threshold"]
+    )
     summary = (
         important.groupby(
-            ["drug_id", "compound_name_source", "scaffold_id", "model"], as_index=False
+            ["drug_id", "compound_name_source", "dili_category", "scaffold_id", "model"], as_index=False
         )
         .agg(
             mean_probability=("predicted_probability", "mean"),
             minimum_probability=("predicted_probability", "min"),
             negative_repeats=("classified_negative", "sum"),
+            sensitivity_negative_repeats=("below_sensitivity_threshold", "sum"),
             repeats=("repeat", "nunique"),
+            mean_youden_threshold=("youden_threshold", "mean"),
+            mean_sensitivity_threshold=("sensitivity_threshold", "mean"),
+            convergence_warnings=("convergence_warnings", "sum"),
         )
+    )
+    summary["youden_false_negative_persistence"] = summary["negative_repeats"] / summary["repeats"]
+    summary["sensitivity_false_negative_persistence"] = summary["sensitivity_negative_repeats"] / summary["repeats"]
+    curation_columns = [
+        "drug_id", "curation_flags", "review_status", "resolution_method",
+        "identity_adjudication", "active_moiety_adjudication",
+    ]
+    summary = summary.merge(cohort[curation_columns], on="drug_id", how="left", validate="many_to_one")
+    summary["training_context"] = (
+        "Outer-fold out-of-fold prediction; molecule and its chemical group were absent from that fit."
+    )
+    summary["therapeutic_class"] = (
+        "Not available in the locked DILIrank source; no post hoc class was inferred."
     )
     return summary[summary["negative_repeats"] > 0].sort_values(
         ["negative_repeats", "mean_probability"], ascending=[False, True]
     )
 
 
+def _repeat_stability_svg(repeat_metrics: pd.DataFrame) -> str:
+    rows = repeat_metrics[repeat_metrics["model"].isin(["B", "D"])]
+    values = rows["auroc"].to_numpy(float)
+    low, high = min(values) - 0.02, max(values) + 0.02
+    def x(value: float) -> float:
+        return 110 + (value - low) / max(high - low, 1e-9) * 710
+    marks = []
+    for model, y, colour in [("B", 95, "#365f91"), ("D", 155, "#e77961")]:
+        subset = rows[rows["model"] == model].sort_values("repeat")
+        marks.append(f'<text x="55" y="{y + 5}" font-family="sans-serif" font-weight="700">{model}</text>')
+        marks.extend(
+            f'<circle cx="{x(float(row.auroc)):.2f}" cy="{y}" r="7" fill="{colour}"><title>Repeat {int(row.repeat) + 1}: {float(row.auroc):.4f}</title></circle>'
+            for row in subset.itertuples()
+        )
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="880" height="230" viewBox="0 0 880 230" role="img" aria-label="Repeat-level AUROC stability for models B and D">
+<rect width="880" height="230" rx="22" fill="#f4f8f7"/><text x="44" y="42" font-family="sans-serif" font-size="18" font-weight="700" fill="#102b35">Repeat-level AUROC stability</text>
+<line x1="110" y1="190" x2="820" y2="190" stroke="#9db2b6"/><text x="110" y="215" font-family="monospace" font-size="11">{low:.3f}</text><text x="820" y="215" text-anchor="end" font-family="monospace" font-size="11">{high:.3f}</text>{''.join(marks)}</svg>'''
+
+
+def _validate_result_lineage(result_path: str | Path, prediction_key: str) -> dict:
+    target = Path(result_path)
+    if target != RESULT_PATHS[prediction_key]:
+        raise AssertionError(f"Report requires the frozen {prediction_key} result path")
+    manifest_path = target.with_suffix(".manifest.json")
+    manifest = _load_json(manifest_path)
+    if manifest.get("output_sha256") != sha256_file(target):
+        raise AssertionError(f"Stale result manifest: {target}")
+    if manifest.get("prediction_sha256") != sha256_file(PREDICTION_PATHS[prediction_key]):
+        raise AssertionError(f"Result is not bound to current {prediction_key} predictions")
+    if manifest.get("g4_prediction_lock_sha256") != sha256_file(G4_PATH):
+        raise AssertionError(f"Result was not produced from the accepted G4 lock: {target}")
+    bootstrap_path = target.with_name(f"{target.stem}.bootstrap_delta_auroc.npy")
+    if manifest.get("bootstrap_sha256") != sha256_file(bootstrap_path):
+        raise AssertionError(f"Result bootstrap companion is stale: {target}")
+    if prediction_key != "update_transport":
+        repeat_metrics_path = target.with_name(f"{target.stem}.repeat_metrics.csv")
+        if manifest.get("repeat_metrics_sha256") != sha256_file(repeat_metrics_path):
+            raise AssertionError(f"Result repeat-metrics companion is stale: {target}")
+    return _load_json(target)
+
+
 def _paper_markdown(summary: dict) -> str:
     primary = summary["primary"]
     lower, upper = primary["ci95"]
     model_rows = "\n".join(
-        f"| {model} | {values['auroc']:.3f} | {values['pr_auroc']:.3f} | "
+        f"| {model} | {values['auroc']:.3f} ({summary['model_repeat_uncertainty'][model]['auroc']['repeat_sd']:.3f}) | {values['pr_auroc']:.3f} | "
         f"{values['brier']:.3f} | {values['calibration_intercept']:.3f} | "
         f"{values['calibration_slope']:.3f} |"
         for model, values in summary["models"].items()
@@ -171,18 +248,20 @@ Bemis-Murcko scaffolds defined groups for ring-containing structures; acyclic st
 - DILIrank 2.0 records: {summary['flow']['dilirank_records']:,}
 - Non-ambiguous records structurally considered: {summary['flow']['non_ambiguous_records_considered']:,}
 - Eligible / excluded: {summary['flow']['eligible_drugs']:,} / {summary['flow']['excluded_drugs']:,}
-- Chemical groups: {summary['flow']['scaffold_groups']:,}
+- Chemical groups: {summary['flow']['scaffold_groups']:,} across all eligible drugs; {summary['flow']['development_groups']:,} constructed independently in development and {summary['flow']['update_groups']:,} constructed separately in the update cohort
 - Development / untouched update drugs: {summary['flow']['development_drugs']:,} / {summary['flow']['update_drugs']:,}
 
 ### Model performance
 
-| Model | AUROC | PR-AUROC | Brier | Calibration intercept | Calibration slope |
+| Model | AUROC mean (repeat SD) | PR-AUROC | Brier | Calibration intercept | Calibration slope |
 |---|---:|---:|---:|---:|---:|
 {model_rows}
 
 ### Primary answer
 
 The paired change was **{primary['delta_auroc']:+.3f}** (95% CI **{lower:+.3f} to {upper:+.3f}**) against the pre-specified practical benchmark of +{primary['practical_gain_benchmark']:.2f}. **{primary['interpretation']}** Repeat-specific differences were {', '.join(f'{value:+.3f}' for value in primary['repeat_deltas'])}.
+
+The pre-performance precision simulation on the final development group vector had minimum empirical coverage {summary['precision_diagnostics']['minimum_empirical_coverage']:.3f}, maximum mean interval width {summary['precision_diagnostics']['maximum_mean_ci_width']:.3f}, and maximum 100-versus-2,000-resample endpoint shift {summary['precision_diagnostics']['maximum_endpoint_shift_100_to_2000']:.3f}. These diagnostics motivate cautious interval interpretation and do not alter the frozen estimator.
 
 ### Transport and error review
 
@@ -195,6 +274,8 @@ The untouched added-drug cohort estimate was {update['estimate']:+.3f} (95% CI {
 {robustness_rows}
 
 The random-split analysis is explicitly optimistic and cannot replace scaffold-grouped validation. The `vMost`-versus-`vNo` and class-balanced analyses are sensitivity checks; none redefines the primary estimand.
+
+Across the primary fits, {summary['convergence']['primary']['warning_count']} convergence warnings were recorded. All are retained and disclosed; no prediction is silently removed. Repeat-level metric ranges and standard deviations, the cohort/scaffold table, sensitivity table, and both false-negative persistence definitions are provided as machine-readable companion files.
 
 ## Interpretation
 
@@ -213,6 +294,8 @@ This study evaluates drug-level prediction of curated DILI concern within DILIra
 def generate_research_report(
     cohort_path: str | Path,
     folds_path: str | Path,
+    all_folds_path: str | Path,
+    update_groups_path: str | Path,
     predictions_path: str | Path,
     results_path: str | Path,
     update_results_path: str | Path,
@@ -222,15 +305,40 @@ def generate_research_report(
     output_directory: str | Path,
     site_data_path: str | Path | None = None,
 ) -> dict:
+    g3 = require_feature_fold_lock()
+    g4 = require_prediction_lock()
+    expected_inputs = {
+        "cohort": (Path(cohort_path), Path("data/processed/cohort_audit.csv")),
+        "folds": (Path(folds_path), Path("artifacts/folds/development_folds.csv")),
+        "all_folds": (Path(all_folds_path), Path("artifacts/folds/outer_folds.csv")),
+        "update_groups": (Path(update_groups_path), Path("artifacts/folds/update_groups.csv")),
+        "predictions": (Path(predictions_path), PREDICTION_PATHS["primary"]),
+    }
+    for label, (actual_path, expected_path) in expected_inputs.items():
+        if actual_path != expected_path:
+            raise AssertionError(f"Report requires the frozen {label} path: {expected_path}")
+    if g4["source_hashes"][str(PREDICTION_PATHS["primary"])] != sha256_file(predictions_path):
+        raise AssertionError("Report primary prediction input does not match G4")
+    g3_hash_contract = {
+        "cohort": cohort_path,
+        "development_folds": folds_path,
+        "all_cohort_folds": all_folds_path,
+        "update_groups": update_groups_path,
+    }
+    for key, path in g3_hash_contract.items():
+        if g3["source_hashes"].get(key) != sha256_file(path):
+            raise AssertionError(f"Report {key} input does not match G3")
     cohort = pd.read_csv(cohort_path)
     folds = pd.read_csv(folds_path)
+    all_folds = pd.read_csv(all_folds_path)
+    update_groups = pd.read_csv(update_groups_path)
     predictions = pd.read_csv(predictions_path)
-    results = _load_json(results_path)
-    update_results = _load_json(update_results_path)
+    results = _validate_result_lineage(results_path, "primary")
+    update_results = _validate_result_lineage(update_results_path, "update_transport")
     robustness = {
-        "vmost_vs_vno": _load_json(vmost_results_path),
-        "stratified_random": _load_json(random_results_path),
-        "class_balanced": _load_json(balanced_results_path),
+        "vmost_vs_vno": _validate_result_lineage(vmost_results_path, "vmost_vs_vno"),
+        "stratified_random": _validate_result_lineage(random_results_path, "stratified_random"),
+        "class_balanced": _validate_result_lineage(balanced_results_path, "class_balanced"),
     }
     target = Path(output_directory)
     target.mkdir(parents=True, exist_ok=True)
@@ -241,11 +349,36 @@ def generate_research_report(
     roc_data.to_csv(target / "roc_curves.csv", index=False)
     pr_data.to_csv(target / "precision_recall_curves.csv", index=False)
     calibration_data.to_csv(target / "calibration.csv", index=False)
-    errors = _important_false_negatives(predictions)
+    errors = _important_false_negatives(predictions, cohort)
     errors.to_csv(target / "important_false_negatives.csv", index=False)
     (target / "primary_effect.svg").write_text(
         _primary_svg(results["primary"]), encoding="utf-8"
     )
+    primary_repeat_metrics = pd.read_csv(
+        Path(results_path).with_name(f"{Path(results_path).stem}.repeat_metrics.csv")
+    )
+    primary_repeat_metrics.to_csv(target / "repeat_stability.csv", index=False)
+    (target / "repeat_stability.svg").write_text(
+        _repeat_stability_svg(primary_repeat_metrics), encoding="utf-8"
+    )
+    uncertainty_rows = []
+    for model, metrics in results["model_repeat_uncertainty"].items():
+        for metric, values in metrics.items():
+            uncertainty_rows.append({"model": model, "metric": metric, **values})
+    pd.DataFrame(uncertainty_rows).to_csv(target / "model_metric_uncertainty.csv", index=False)
+    sensitivity_rows = []
+    for name, value in robustness.items():
+        sensitivity_rows.append(
+            {
+                "analysis": name,
+                "delta_auroc": value["primary"]["delta_auroc"],
+                "ci95_lower": value["primary"]["ci95"][0],
+                "ci95_upper": value["primary"]["ci95"][1],
+                "interpretation": value["primary"]["interpretation"],
+                "convergence_warnings": value["convergence"]["warning_count"],
+            }
+        )
+    pd.DataFrame(sensitivity_rows).to_csv(target / "sensitivity_analyses.csv", index=False)
 
     eligible = cohort[cohort["eligibility"]]
     flow = {
@@ -255,10 +388,38 @@ def generate_research_report(
         "excluded_drugs": int((~cohort["eligibility"]).sum()),
         "development_drugs": int((eligible["release_group"] == "original-list").sum()),
         "update_drugs": int((eligible["release_group"] == "added-in-2.0").sum()),
-        "scaffold_groups": int(folds["scaffold_id"].nunique()),
+        "scaffold_groups": int(all_folds["scaffold_id"].nunique()),
+        "development_groups": int(folds["scaffold_id"].nunique()),
+        "update_groups": int(update_groups["scaffold_id"].nunique()),
         "outcome_counts": eligible["dili_category"].value_counts().to_dict(),
     }
     write_json(target / "study_flow.json", flow)
+    scaffold_summary = pd.DataFrame(
+        [
+            {
+                "population": "all structurally eligible",
+                "drugs": len(all_folds),
+                "groups": int(all_folds["scaffold_id"].nunique()),
+                "largest_group": int(all_folds["scaffold_id"].value_counts().max()),
+                "singleton_groups": int((all_folds["scaffold_id"].value_counts() == 1).sum()),
+            },
+            {
+                "population": "original-list development",
+                "drugs": len(folds),
+                "groups": int(folds["scaffold_id"].nunique()),
+                "largest_group": int(folds["scaffold_id"].value_counts().max()),
+                "singleton_groups": int((folds["scaffold_id"].value_counts() == 1).sum()),
+            },
+            {
+                "population": "added-in-2.0 untouched update",
+                "drugs": len(update_groups),
+                "groups": int(update_groups["scaffold_id"].nunique()),
+                "largest_group": int(update_groups["scaffold_id"].value_counts().max()),
+                "singleton_groups": int((update_groups["scaffold_id"].value_counts() == 1).sum()),
+            },
+        ]
+    )
+    scaffold_summary.to_csv(target / "cohort_scaffold_summary.csv", index=False)
 
     primary = results["primary"]
     summary = {
@@ -270,14 +431,31 @@ def generate_research_report(
         "answer": primary["interpretation"],
         "primary": primary,
         "models": results["models"],
+        "model_repeat_uncertainty": results["model_repeat_uncertainty"],
         "update_transport": update_results,
         "robustness": robustness,
         "flow": flow,
         "important_false_negative_rows": len(errors),
+        "precision_diagnostics": _load_json("audit/qc/precision_simulation.summary.json"),
+        "uncertainty_note": "Per-model uncertainty tables describe variation across five repeats; the primary inferential interval is the complete-scaffold paired bootstrap.",
+        "convergence": {
+            "primary": results["convergence"],
+            "robustness": {name: value["convergence"] for name, value in robustness.items()},
+            "update": update_results["convergence"],
+        },
+        "provenance": {
+            "protocol_lock_sha256": sha256_file(LOCK_PATH),
+            "g3_feature_lock_sha256": sha256_file(G3_PATH),
+            "g4_prediction_lock_sha256": sha256_file(G4_PATH),
+            "g4_contracts": g4["prediction_contracts"],
+            "primary_result": results["provenance"],
+        },
         "scope": results["scope"],
         "source_hashes": {
             "cohort": sha256_file(cohort_path),
             "folds": sha256_file(folds_path),
+            "all_folds": sha256_file(all_folds_path),
+            "update_groups": sha256_file(update_groups_path),
             "predictions": sha256_file(predictions_path),
             "results": sha256_file(results_path),
             "update_results": sha256_file(update_results_path),
@@ -290,4 +468,18 @@ def generate_research_report(
     if site_data_path is not None:
         write_json(site_data_path, summary)
     (target / "research_report.md").write_text(_paper_markdown(summary), encoding="utf-8")
+    write_json(
+        target / "report_manifest.json",
+        {
+            "g4_prediction_lock_sha256": sha256_file(G4_PATH),
+            "research_summary_sha256": sha256_file(target / "research_summary.json"),
+            "research_report_sha256": sha256_file(target / "research_report.md"),
+            "site_data_sha256": sha256_file(site_data_path) if site_data_path is not None else None,
+            "generated_files": {
+                str(path.relative_to(target)): sha256_file(path)
+                for path in sorted(target.iterdir())
+                if path.is_file() and path.name != "report_manifest.json"
+            },
+        },
+    )
     return summary

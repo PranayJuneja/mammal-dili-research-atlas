@@ -3,12 +3,14 @@
 Date: 2026-08-13 (Asia/Calcutta)
 Status: Accepted for estimation-focused execution; no protocol setting changed.
 
-This simulation was completed before any empirical model-performance result was inspected. It used the current 809-row cohort's observed 568-group size vector, including the largest 74-drug scaffold group, and generated five paired prediction sets per experiment.
+This replacement simulation was completed before any empirical model-performance result was generated or inspected. It supersedes the earlier all-eligible planning run because PA-02 prospectively narrowed the primary development population. It used the final 675-row original-list development cohort's independently constructed 460-group size vector, including the largest 69-drug group, and generated five paired prediction sets per experiment.
 
-Across 16 scenarios, the smallest observed interval-coverage estimate was 0.85 and the largest mean 95% interval width was 0.04811 AUROC. The largest endpoint movement between a 100-resample prefix and the locked 2,000-resample whole-group bootstrap was 0.00597 AUROC.
+Across 16 scenarios, the smallest observed interval-coverage estimate was 0.825 and the largest mean 95% interval width was 0.05474 AUROC. The largest endpoint movement between a 100-resample prefix and the locked 2,000-resample whole-group bootstrap was 0.00797 AUROC.
 
 The coverage screen uses only 40 Monte Carlo experiments per scenario and is therefore an imprecise diagnostic, not a guarantee of nominal coverage. The maximum width also shows that this dataset may not distinguish small gains precisely. This limitation is accepted because the study is explicitly estimation-focused: it will report the paired effect estimate, its interval, the 0.03 practical benchmark, and an inconclusive result when the interval spans both no gain and a meaningful gain. The simulation did not select a more favourable method, and it does not justify a binary superiority claim.
 
 Locked execution remains unchanged: five repeated five-fold scaffold-grouped nested cross-validation runs and 2,000 whole-group paired bootstrap resamples.
 
-Evidence: `audit/qc/precision_simulation.csv` and `audit/qc/precision_simulation.summary.json`.
+The prior 809-row/568-group assessment is superseded and must not be cited as the primary precision evidence.
+
+Evidence: `audit/qc/precision_simulation.csv`, `audit/qc/precision_simulation.summary.json`, and PA-02.

@@ -103,7 +103,7 @@ def _observed_group_vectors(folds: pd.DataFrame, rng: np.random.Generator) -> di
 
 def simulate_precision(
     output_path: str | Path,
-    folds_path: str | Path = "artifacts/folds/outer_folds.csv",
+    folds_path: str | Path = "artifacts/folds/development_folds.csv",
 ) -> dict:
     seeds = validate_config("configs/seeds.yaml")
     analysis = validate_config("configs/analysis.yaml")

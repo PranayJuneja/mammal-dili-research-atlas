@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
+import pytest
 
+from mammal_dili.embeddings import mammal
 from mammal_dili.embeddings.mammal import (
     make_prompt,
     prepare_full_blind_input,
+    validate_full_extraction,
     validate_pilot,
 )
 from mammal_dili.io import sha256_file, write_json
@@ -140,3 +143,29 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
     assert report["passed"] is True
     assert report["process_repeatability"]["within_tolerance"] is True
     assert report["batch_order_invariance"]["within_tolerance"] is True
+
+
+def test_full_validation_binds_repeat_to_exact_sample_hash(tmp_path, monkeypatch) -> None:
+    full_input = tmp_path / "full.csv"
+    sample = tmp_path / "sample.csv"
+    pd.DataFrame({"drug_id": ["a", "b"]}).to_csv(full_input, index=False)
+    pd.DataFrame({"drug_id": ["a"]}).to_csv(sample, index=False)
+    arrays = [
+        {"drug_ids": np.array(["a", "b"]), "embeddings": np.ones((2, 768))},
+        {"drug_ids": np.array(["a"]), "embeddings": np.ones((1, 768))},
+    ]
+    manifests = [
+        {"input_sha256": sha256_file(full_input)},
+        {"input_sha256": "stale-sample-hash"},
+    ]
+    calls = iter(zip(arrays, manifests, strict=True))
+    monkeypatch.setattr(mammal, "_load_and_validate_run", lambda *_: next(calls))
+    with pytest.raises(AssertionError, match="deterministic sample"):
+        validate_full_extraction(
+            full_input,
+            sample,
+            tmp_path / "full.npz",
+            tmp_path / "repeat.npz",
+            "configs/mammal_embedding.yaml",
+            tmp_path / "report.json",
+        )

@@ -164,8 +164,10 @@ def select_embedding_verification_sample(
     input_path: str | Path,
     output_path: str | Path,
     fraction: float = 0.05,
-    seed: int = 78123,
+    seed: int | None = None,
 ) -> pd.DataFrame:
+    if seed is None:
+        seed = int(validate_config("configs/seeds.yaml")["embedding_verification_sample"])
     frame = pd.read_csv(input_path)
     size = max(1, int(np.ceil(len(frame) * fraction)))
     sample = frame.sample(n=size, random_state=seed).sort_values("drug_id").reset_index(drop=True)
@@ -653,6 +655,7 @@ def validate_pilot(
 
 def validate_full_extraction(
     input_path: str | Path,
+    expected_sample_path: str | Path,
     full_path: str | Path,
     repeat_sample_path: str | Path,
     config_path: str | Path,
@@ -660,16 +663,27 @@ def validate_full_extraction(
 ) -> dict:
     config = validate_config(config_path)
     requested = pd.read_csv(input_path)["drug_id"].astype(str).tolist()
+    expected_repeat_ids = pd.read_csv(expected_sample_path)["drug_id"].astype(str).tolist()
     full, full_manifest = _load_and_validate_run(full_path, "input_order")
     repeat, repeat_manifest = _load_and_validate_run(repeat_sample_path, "input_order")
     full_ids = full["drug_ids"].astype(str).tolist()
     repeat_ids = repeat["drug_ids"].astype(str).tolist()
     if full_manifest["input_sha256"] != sha256_file(input_path):
         raise AssertionError("Full extraction manifest input hash does not match frozen input")
+    if repeat_manifest["input_sha256"] != sha256_file(expected_sample_path):
+        raise AssertionError("Repeat manifest input hash does not match deterministic sample")
+    if repeat_manifest["requested_drug_ids"] != expected_repeat_ids or repeat_ids != expected_repeat_ids:
+        raise AssertionError("Repeat extraction IDs/order do not exactly match deterministic sample")
     if not set(repeat_ids).issubset(full_ids):
         raise AssertionError("Verification sample contains IDs absent from full extraction")
     if full_manifest["run_id"] == repeat_manifest["run_id"] or full_manifest["process_id"] == repeat_manifest["process_id"]:
         raise AssertionError("Verification extraction is not from a distinct clean process")
+    timestamps = [
+        datetime.fromisoformat(full_manifest["started_at_utc"]),
+        datetime.fromisoformat(repeat_manifest["started_at_utc"]),
+    ]
+    if any(timestamp.tzinfo is None for timestamp in timestamps) or timestamps[0] == timestamps[1]:
+        raise AssertionError("Extraction timestamps must be distinct and timezone-aware")
     invariant_fields = [
         "config_file_sha256",
         "validated_config_sha256",
@@ -714,7 +728,8 @@ def validate_full_extraction(
     )
     coverage = len(full_ids) / len(requested)
     passed = (
-        set(full_ids).issubset(requested)
+        full_ids == requested
+        and coverage == 1.0
         and coverage >= float(config["full_cohort_minimum_coverage"])
         and repeatable
         and len(repeat_ids) == len(set(repeat_ids))
@@ -733,6 +748,10 @@ def validate_full_extraction(
         "maximum_absolute_difference": max(differences, default=None),
         "full_output_sha256": sha256_file(full_path),
         "repeat_output_sha256": sha256_file(repeat_sample_path),
+        "expected_sample_sha256": sha256_file(expected_sample_path),
+        "expected_sample_drug_ids": expected_repeat_ids,
+        "sampling_seed": int(validate_config("configs/seeds.yaml")["embedding_verification_sample"]),
+        "started_at_utc": [manifest["started_at_utc"] for manifest in [full_manifest, repeat_manifest]],
         "manifest_invariants_verified": invariant_fields,
     }
     write_json(report_path, report)

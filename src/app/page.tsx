@@ -17,8 +17,17 @@ import { OutcomeExplorer } from "@/components/outcome-explorer";
 import { SiteHeader } from "@/components/site-header";
 import { StudySpine } from "@/components/study-spine";
 import { limitations, models, safeguards, sources, studyStats } from "@/data/research";
+import generatedResults from "@/data/generated-results.json";
+
+type PrimaryResult = {
+  delta_auroc: number;
+  ci95: [number, number];
+  interpretation: string;
+};
 
 export default function HomePage() {
+  const complete = generatedResults.status === "complete";
+  const primary = generatedResults.primary as PrimaryResult | null;
   return (
     <>
       <a className="skip-link" href="#main-content">Skip to main content</a>
@@ -28,7 +37,7 @@ export default function HomePage() {
           <div className="hero-copy">
             <div className="status-line">
               <span className="live-dot" />
-              Study execution underway
+              {complete ? "Frozen analysis complete" : "Study execution underway"}
               <span aria-hidden="true">·</span>
               Governance clearance reported
             </div>
@@ -82,14 +91,23 @@ export default function HomePage() {
               </div>
             </article>
             <article className="answer-card" id="status">
-              <span className="eyebrow">What we can answer today</span>
-              <h3>The protocol is answer-ready; the performance answer is being computed.</h3>
-              <p>The full dataset, feature, validation, and uncertainty pipeline is being executed from the locked specification. This page will replace this status with the frozen paired estimate—never a guessed conclusion.</p>
+              <span className="eyebrow">The research answer</span>
+              {complete && primary ? (
+                <>
+                  <h3>Adding frozen MAMMAL changed AUROC by {primary.delta_auroc >= 0 ? "+" : ""}{primary.delta_auroc.toFixed(3)}.</h3>
+                  <p>95% CI {primary.ci95[0] >= 0 ? "+" : ""}{primary.ci95[0].toFixed(3)} to {primary.ci95[1] >= 0 ? "+" : ""}{primary.ci95[1].toFixed(3)}. {primary.interpretation}</p>
+                </>
+              ) : (
+                <>
+                  <h3>The protocol is answer-ready; the performance answer is being computed.</h3>
+                  <p>{generatedResults.answer}</p>
+                </>
+              )}
               <ul className="check-list">
                 <li><Check weight="bold" />Primary comparison locked</li>
                 <li><Check weight="bold" />FDA source captured and validated</li>
                 <li><Check weight="bold" />Official MAMMAL revisions pinned</li>
-                <li><Flask weight="fill" />Embedding and modelling run in progress</li>
+                <li>{complete ? <Check weight="bold" /> : <Flask weight="fill" />}{complete ? "Frozen results generated and validated" : "Embedding and modelling run in progress"}</li>
               </ul>
             </article>
           </div>

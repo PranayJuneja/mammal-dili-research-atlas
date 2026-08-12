@@ -3,8 +3,14 @@ import pandas as pd
 import pytest
 
 from mammal_dili.curation.structures import _resolve_duplicates
+from mammal_dili.io import sha256_file
 from mammal_dili.modelling import nested_cv
-from mammal_dili.modelling.nested_cv import FeatureSet, _pipeline, split_development_and_update
+from mammal_dili.modelling.nested_cv import (
+    FeatureSet,
+    _pipeline,
+    split_development_and_update,
+    validation_group_vectors,
+)
 
 
 def _config() -> dict:
@@ -54,6 +60,15 @@ def test_update_cohort_never_enters_development_fit_object() -> None:
     assert update["drug_id"].tolist() == ["new-1"]
 
 
+def test_random_split_preserves_chemical_groups_for_bootstrap() -> None:
+    frame = pd.DataFrame(
+        {"drug_id": ["a", "b"], "scaffold_id": ["shared", "shared"]}
+    )
+    chemical, split = validation_group_vectors(frame, "stratified_random")
+    assert chemical.tolist() == ["shared", "shared"]
+    assert split.tolist() == ["a", "b"]
+
+
 def test_nested_cv_passes_only_original_list_to_feature_loading(tmp_path, monkeypatch) -> None:
     rows = []
     for index in range(20):
@@ -98,6 +113,17 @@ def test_nested_cv_passes_only_original_list_to_feature_loading(tmp_path, monkey
         raise RuntimeError("stop")
 
     monkeypatch.setattr(nested_cv, "require_protocol_lock", lambda: {"config_bundle_sha256": "x"})
+    monkeypatch.setattr(
+        nested_cv,
+        "require_feature_fold_lock",
+        lambda: {
+            "source_hashes": {
+                "development_folds": sha256_file(folds),
+                "conventional": sha256_file(conventional),
+                "mammal": sha256_file(mammal),
+            }
+        },
+    )
     monkeypatch.setattr(nested_cv, "load_feature_set", stop_after_feature_load)
     with pytest.raises(RuntimeError, match="stop"):
         nested_cv.run_nested_cv(

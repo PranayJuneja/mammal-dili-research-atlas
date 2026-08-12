@@ -94,3 +94,72 @@ def build_groups_and_folds(
         },
     )
     return frame
+
+
+def build_analysis_groups_and_folds(
+    cohort_path: str | Path,
+    config_path: str | Path,
+    development_output_path: str | Path,
+    update_output_path: str | Path,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build development folds without allowing update structures or labels to influence them."""
+    config = validate_config(config_path)
+    cohort = pd.read_csv(cohort_path)
+    eligible = cohort[cohort["eligibility"]].copy()
+    development = eligible[eligible["release_group"] == "original-list"].reset_index(drop=True)
+    update = eligible[eligible["release_group"] == "added-in-2.0"].reset_index(drop=True)
+    if set(development["drug_id"]) & set(update["drug_id"]):
+        raise AssertionError("Development and update rows overlap")
+    development["scaffold_id"] = assign_scaffold_groups(
+        development["standardised_isomeric_smiles"].tolist(),
+        float(config["acyclic_similarity_threshold"]),
+    )
+    update["scaffold_id"] = assign_scaffold_groups(
+        update["standardised_isomeric_smiles"].tolist(),
+        float(config["acyclic_similarity_threshold"]),
+    )
+    for repeat, seed in enumerate(config["seeds"]):
+        splitter = StratifiedGroupKFold(
+            n_splits=int(config["outer_folds"]),
+            shuffle=True,
+            random_state=int(seed),
+        )
+        fold_values = np.full(len(development), -1, dtype=int)
+        for fold, (_, test_indices) in enumerate(
+            splitter.split(
+                development,
+                development["outcome"].astype(int),
+                groups=development["scaffold_id"],
+            )
+        ):
+            if development.iloc[test_indices]["outcome"].nunique() != 2:
+                raise ValueError(f"Repeat {repeat} fold {fold} lacks both development classes")
+            fold_values[test_indices] = fold
+        development[f"outer_fold_repeat_{repeat}"] = fold_values
+    development_target = Path(development_output_path)
+    update_target = Path(update_output_path)
+    development_target.parent.mkdir(parents=True, exist_ok=True)
+    development.to_csv(development_target, index=False)
+    update.to_csv(update_target, index=False)
+    write_json(
+        development_target.with_suffix(".summary.json"),
+        {
+            "purpose": "primary original-list development population",
+            "eligible_drugs": len(development),
+            "groups": development["scaffold_id"].nunique(),
+            "largest_group": int(development["scaffold_id"].value_counts().max()),
+            "update_rows_excluded_before_grouping": len(update),
+            "repeats": len(config["seeds"]),
+            "folds": int(config["outer_folds"]),
+        },
+    )
+    write_json(
+        update_target.with_suffix(".summary.json"),
+        {
+            "purpose": "untouched update transport population; no development folds assigned",
+            "eligible_drugs": len(update),
+            "groups": update["scaffold_id"].nunique(),
+            "largest_group": int(update["scaffold_id"].value_counts().max()),
+        },
+    )
+    return development, update

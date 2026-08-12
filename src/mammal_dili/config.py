@@ -130,6 +130,10 @@ class AnalysisConfig(StrictModel):
     sensitivity_target: float
     bootstrap_resamples: int
     bootstrap_seed: int
+    development_release_group: Literal["original-list"]
+    update_release_group: Literal["added-in-2.0"]
+    final_hyperparameter_rule: str
+    required_outer_selection_count: int
 
 
 class SeedsConfig(StrictModel):
@@ -141,6 +145,7 @@ class SeedsConfig(StrictModel):
     group_bootstrap: int
     negative_control: int
     label_permutation: int
+    embedding_verification_sample: int
 
 
 CONFIG_MODELS = {

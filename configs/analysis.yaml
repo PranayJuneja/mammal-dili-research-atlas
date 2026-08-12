@@ -19,3 +19,7 @@ threshold: "training-fold Youden"
 sensitivity_target: 0.80
 bootstrap_resamples: 2000
 bootstrap_seed: 120900
+development_release_group: "original-list"
+update_release_group: "added-in-2.0"
+final_hyperparameter_rule: "modal outer-fold selected C across 25 development fits; ties choose the smaller C"
+required_outer_selection_count: 25
