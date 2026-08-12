@@ -47,8 +47,12 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("validate-pilot")
     commands.add_parser("validate-full-extraction")
     commands.add_parser("cross-validate")
+    commands.add_parser("cross-validate-vmost")
+    commands.add_parser("cross-validate-random")
     commands.add_parser("evaluate-update")
     commands.add_parser("estimate")
+    commands.add_parser("estimate-vmost")
+    commands.add_parser("estimate-random")
     commands.add_parser("estimate-update")
     commands.add_parser("simulate-precision")
     commands.add_parser("generate-report")
@@ -163,11 +167,49 @@ def main() -> None:
             "artifacts/predictions/oof_predictions.csv",
         )
         print(f"Generated {len(result)} out-of-fold predictions")
+    elif args.command == "cross-validate-vmost":
+        result = run_nested_cv(
+            "artifacts/folds/outer_folds.csv",
+            "artifacts/features/conventional.npz",
+            "artifacts/features/mammal.npz",
+            "configs/analysis.yaml",
+            "artifacts/predictions/vmost_vno_oof_predictions.csv",
+            population="vmost_vs_vno",
+            model_names=("B", "D"),
+        )
+        print(f"Generated {len(result)} vMost-versus-vNo sensitivity predictions")
+    elif args.command == "cross-validate-random":
+        result = run_nested_cv(
+            "artifacts/folds/outer_folds.csv",
+            "artifacts/features/conventional.npz",
+            "artifacts/features/mammal.npz",
+            "configs/analysis.yaml",
+            "artifacts/predictions/random_split_oof_predictions.csv",
+            model_names=("B", "D"),
+            validation_design="stratified_random",
+        )
+        print(f"Generated {len(result)} optimistic random-split robustness predictions")
     elif args.command == "estimate":
         result = estimate_results(
             "artifacts/predictions/oof_predictions.csv",
             "configs/analysis.yaml",
             "artifacts/results/results.json",
+        )
+        print(json.dumps(result["primary"], indent=2))
+    elif args.command == "estimate-vmost":
+        result = estimate_results(
+            "artifacts/predictions/vmost_vno_oof_predictions.csv",
+            "configs/analysis.yaml",
+            "artifacts/results/vmost_vno_results.json",
+            analysis_label="pre-specified vMost-versus-vNo sensitivity analysis",
+        )
+        print(json.dumps(result["primary"], indent=2))
+    elif args.command == "estimate-random":
+        result = estimate_results(
+            "artifacts/predictions/random_split_oof_predictions.csv",
+            "configs/analysis.yaml",
+            "artifacts/results/random_split_results.json",
+            analysis_label="pre-specified optimistic stratified-random robustness analysis",
         )
         print(json.dumps(result["primary"], indent=2))
     elif args.command == "evaluate-update":

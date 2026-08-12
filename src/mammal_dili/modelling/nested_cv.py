@@ -13,7 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -167,6 +167,9 @@ def run_nested_cv(
     mammal_path: str | Path,
     config_path: str | Path,
     output_path: str | Path,
+    population: str = "primary",
+    model_names: tuple[str, ...] = ("A", "B", "C", "D"),
+    validation_design: str = "scaffold_grouped",
 ) -> pd.DataFrame:
     protocol_lock = require_protocol_lock()
     config = validate_config(config_path)
@@ -180,16 +183,43 @@ def run_nested_cv(
     frame = frame[frame["drug_id"].astype(str).isin(common)].copy().reset_index(drop=True)
     development, update = split_development_and_update(frame)
     frame = development.reset_index(drop=True)
+    if population == "vmost_vs_vno":
+        frame = frame[
+            frame["dili_category"].str.startswith("vMost")
+            | frame["dili_category"].str.startswith("vNo")
+        ].reset_index(drop=True)
+    elif population != "primary":
+        raise ValueError(f"Unknown analysis population: {population}")
     drug_ids = frame["drug_id"].astype(str).tolist()
     y = frame["outcome"].astype(int).to_numpy()
-    groups = frame["scaffold_id"].astype(str).to_numpy()
+    if validation_design == "scaffold_grouped":
+        groups = frame["scaffold_id"].astype(str).to_numpy()
+    elif validation_design == "stratified_random":
+        groups = frame["drug_id"].astype(str).to_numpy()
+        for repeat, seed in enumerate(folds_config["seeds"]):
+            column = f"random_outer_fold_repeat_{repeat}"
+            frame[column] = -1
+            splitter = StratifiedKFold(
+                n_splits=int(folds_config["outer_folds"]),
+                shuffle=True,
+                random_state=int(seed),
+            )
+            for fold, (_, test_indices) in enumerate(splitter.split(frame, y)):
+                frame.loc[test_indices, column] = fold
+    else:
+        raise ValueError(f"Unknown validation design: {validation_design}")
     outputs = []
     tuning_log = []
+    fold_prefix = (
+        "outer_fold_repeat_"
+        if validation_design == "scaffold_grouped"
+        else "random_outer_fold_repeat_"
+    )
     repeat_columns = sorted(
-        (column for column in frame if column.startswith("outer_fold_repeat_")),
+        (column for column in frame if column.startswith(fold_prefix)),
         key=lambda column: int(column.rsplit("_", 1)[1]),
     )
-    for model_name in ["A", "B", "C", "D"]:
+    for model_name in model_names:
         feature_set = load_feature_set(model_name, drug_ids, conventional_path, mammal_path)
         for repeat, fold_column in enumerate(repeat_columns):
             for outer_fold in sorted(frame[fold_column].unique()):
@@ -241,15 +271,21 @@ def run_nested_cv(
                     }
                 )
     result = pd.DataFrame(outputs)
-    expected = len(frame) * len(repeat_columns) * 4
+    expected = len(frame) * len(repeat_columns) * len(model_names)
     if len(result) != expected:
         raise AssertionError(f"Expected {expected} predictions, found {len(result)}")
-    pairing = result[result["model"].isin(["B", "D"])].groupby(["drug_id", "repeat"])["model"].nunique()
-    if not (pairing == 2).all():
-        raise AssertionError("Models B and D do not have identical paired prediction coverage")
+    if {"B", "D"}.issubset(model_names):
+        pairing = (
+            result[result["model"].isin(["B", "D"])]
+            .groupby(["drug_id", "repeat"])["model"]
+            .nunique()
+        )
+        if not (pairing == 2).all():
+            raise AssertionError("Models B and D do not have identical paired prediction coverage")
     target = Path(output_path)
     target.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(target, index=False)
+    frame[["drug_id", *repeat_columns]].to_csv(target.with_suffix(".folds.csv"), index=False)
     write_json(target.with_suffix(".tuning.json"), tuning_log)
     write_json(
         target.with_suffix(".manifest.json"),
@@ -261,7 +297,10 @@ def run_nested_cv(
             "update_cohort_drug_ids_sha256": hashlib.sha256(
                 "\n".join(sorted(update["drug_id"].astype(str))).encode("utf-8")
             ).hexdigest(),
-            "models": 4,
+            "models": list(model_names),
+            "population": population,
+            "validation_design": validation_design,
+            "analysis_folds_sha256": sha256_file(target.with_suffix(".folds.csv")),
             "repeats": len(repeat_columns),
             "folds_sha256": sha256_file(folds_path),
             "conventional_features_sha256": sha256_file(conventional_path),

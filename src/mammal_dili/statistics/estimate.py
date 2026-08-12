@@ -58,7 +58,12 @@ def _interpret(lower: float, upper: float, delta: float) -> tuple[str, str]:
     return "small_gain", "A positive gain is supported but remains below the practical benchmark."
 
 
-def estimate_results(predictions_path: str | Path, config_path: str | Path, output_path: str | Path) -> dict:
+def estimate_results(
+    predictions_path: str | Path,
+    config_path: str | Path,
+    output_path: str | Path,
+    analysis_label: str = "primary vMost/vLess versus vNo development analysis",
+) -> dict:
     config = validate_config(config_path)
     predictions = pd.read_csv(predictions_path)
     repeat_metrics = []
@@ -98,6 +103,7 @@ def estimate_results(predictions_path: str | Path, config_path: str | Path, outp
     lower, upper = np.percentile(bootstrap, [2.5, 97.5])
     region, wording = _interpret(float(lower), float(upper), float(config["practical_gain"]))
     result = {
+        "analysis_label": analysis_label,
         "primary": {
             "estimand": "mean repeat AUROC(D) - AUROC(B)",
             "delta_auroc": point,
