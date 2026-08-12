@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "status": "LOCKED_FOR_EXECUTION",
-  "locked_at_utc": "2026-08-12T19:26:43.882865+00:00",
+  "locked_at_utc": "2026-08-12T19:51:38.869513+00:00",
   "protocol_baseline_revision": "0b16bd9c903dfaf1088dca8ad198c351db7fa1b7",
-  "implementation_revision_at_lock": "59af85535a7289a71d35bb3d2bc2f7eba8dd5315",
-  "config_bundle_sha256": "257dfa8ed41028c3867adf9ae805c14a97bdae8f4d99527e60905f67f2fb9d67",
+  "implementation_revision_at_lock": "86a71db4660822178dc364712f07b0f505002f46",
+  "config_bundle_sha256": "cf64c9fdd96e6fea42cd5b65fc8309641610db40c5f21910b16b4c8a261a8335",
   "config_files": [
     "analysis.yaml",
     "curation.yaml",
