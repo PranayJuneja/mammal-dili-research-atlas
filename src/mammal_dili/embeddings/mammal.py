@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import contextlib
+import io
+import logging
 import platform
 import subprocess
 import time
 import warnings
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 import numpy as np
 import pandas as pd
@@ -23,6 +28,38 @@ def masked_mean_l2(hidden, attention_mask, torch):
     denominator = expanded_mask.sum(dim=1).clamp_min(1.0)
     pooled = (hidden * expanded_mask).sum(dim=1) / denominator
     return torch.nn.functional.normalize(pooled, p=2, dim=1)
+
+
+def _construct_tokenizer(snapshot: Path):
+    from fuse.data.tokenizers.modular_tokenizer.op import ModularTokenizerOp
+
+    captured_logs: list[str] = []
+
+    class _Capture(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            captured_logs.append(self.format(record))
+
+    handler = _Capture()
+    root_logger = logging.getLogger()
+    transformers_logger = logging.getLogger("transformers")
+    root_logger.addHandler(handler)
+    transformers_logger.addHandler(handler)
+    stream = io.StringIO()
+    try:
+        with (
+            warnings.catch_warnings(record=True) as caught,
+            contextlib.redirect_stdout(stream),
+            contextlib.redirect_stderr(stream),
+        ):
+            warnings.simplefilter("always")
+            tokenizer = ModularTokenizerOp.from_pretrained(snapshot / "tokenizer")
+    finally:
+        root_logger.removeHandler(handler)
+        transformers_logger.removeHandler(handler)
+    warning_messages = [str(item.message) for item in caught]
+    stream_messages = [line.strip() for line in stream.getvalue().splitlines() if line.strip()]
+    messages = sorted(set(warning_messages + captured_logs + stream_messages))
+    return tokenizer, messages
 
 
 def select_blind_pilot(cohort_path: str | Path, output_path: str | Path, total: int = 20) -> pd.DataFrame:
@@ -64,7 +101,6 @@ def select_blind_pilot(cohort_path: str | Path, output_path: str | Path, total: 
 
 def _load_runtime(config: dict):
     import torch
-    from fuse.data.tokenizers.modular_tokenizer.op import ModularTokenizerOp
     from huggingface_hub import snapshot_download
     from mammal.model import Mammal
 
@@ -81,15 +117,14 @@ def _load_runtime(config: dict):
     )
     model.eval()
     model = model.to(device=torch.device(config["device"]), dtype=torch.float32)
-    tokenizer = ModularTokenizerOp.from_pretrained(snapshot / "tokenizer")
-    return torch, model, tokenizer, snapshot
+    tokenizer, tokenizer_loader_warnings = _construct_tokenizer(snapshot)
+    return torch, model, tokenizer, snapshot, tokenizer_loader_warnings
 
 
 def preflight_pilot(
     input_path: str | Path, config_path: str | Path, report_path: str | Path
 ) -> dict:
     """Validate chemistry and pinned-tokenizer behavior without loading model weights."""
-    from fuse.data.tokenizers.modular_tokenizer.op import ModularTokenizerOp
     from huggingface_hub import snapshot_download
     from rdkit import Chem
 
@@ -100,7 +135,7 @@ def preflight_pilot(
             repo_id=config["checkpoint"], revision=config["checkpoint_revision"]
         )
     )
-    tokenizer = ModularTokenizerOp.from_pretrained(snapshot / "tokenizer")
+    tokenizer, tokenizer_loader_warnings = _construct_tokenizer(snapshot)
     diagnostics: list[dict] = []
     for row in frame.to_dict(orient="records"):
         smiles = row["standardised_isomeric_smiles"]
@@ -145,6 +180,7 @@ def preflight_pilot(
         "prompt_suffix": config["prompt_suffix"],
         "max_sequence_length": config["max_sequence_length"],
         "unknown_token_rule": config["unknown_token_rule"],
+        "tokenizer_loader_warnings": tokenizer_loader_warnings,
         "diagnostics": diagnostics,
     }
     write_json(report_path, report)
@@ -169,7 +205,10 @@ def extract_embeddings(
     implementation_revision = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], text=True
     ).strip()
-    torch, model, tokenizer, snapshot = _load_runtime(config)
+    run_id = str(uuid4())
+    process_id = __import__("os").getpid()
+    started_at_utc = datetime.now(UTC).isoformat()
+    torch, model, tokenizer, snapshot, tokenizer_loader_warnings = _load_runtime(config)
     embeddings: list[np.ndarray] = []
     token_counts: list[int] = []
     failures: list[dict] = []
@@ -282,10 +321,11 @@ def extract_embeddings(
         token_counts=np.asarray(token_counts, dtype=np.int32),
     )
     model_files = sorted(snapshot.rglob("*.safetensors"))
-    tokenizer_files = sorted(
-        path
-        for path in snapshot.rglob("*")
-        if path.is_file() and any(term in path.name.casefold() for term in ("token", "vocab", "merges"))
+    tokenizer_root = snapshot / "tokenizer"
+    tokenizer_files = sorted(path for path in tokenizer_root.rglob("*") if path.is_file())
+    embedding_array = np.asarray(embeddings, dtype=np.float32)
+    embedding_norms = (
+        np.linalg.norm(embedding_array, axis=1) if embedding_array.size else np.asarray([])
     )
     environment_locks = [Path("environment/mammal-lock.txt"), Path("environment/chemistry-lock.txt")]
     write_json(
@@ -300,9 +340,13 @@ def extract_embeddings(
             },
             "model_total_bytes": sum(path.stat().st_size for path in model_files),
             "tokenizer_files": {
-                str(path.relative_to(snapshot)): {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+                str(path.relative_to(snapshot)): {
+                    "sha256": sha256_file(path),
+                    "bytes": path.stat().st_size,
+                }
                 for path in tokenizer_files
             },
+            "tokenizer_loader_warnings": tokenizer_loader_warnings,
             "tokenizer_revision": config["checkpoint_revision"],
             "code_revision": config["code_revision"],
             "implementation_revision": implementation_revision,
@@ -312,6 +356,10 @@ def extract_embeddings(
             "config_file_sha256": config_file_sha256,
             "validated_config_sha256": sha256_json(config),
             "batch_order": "reversed" if reverse_order else "input_order",
+            "run_id": run_id,
+            "process_id": process_id,
+            "started_at_utc": started_at_utc,
+            "completed_at_utc": datetime.now(UTC).isoformat(),
             "prompt_prefix": config["prompt_prefix"],
             "prompt_suffix": config["prompt_suffix"],
             "hidden_state": config["hidden_state"],
@@ -333,7 +381,11 @@ def extract_embeddings(
             },
             "rows_requested": len(pd.read_csv(input_path)),
             "rows_successful": len(frame),
-            "embedding_dimension": int(np.asarray(embeddings).shape[1]),
+            "requested_drug_ids": pd.read_csv(input_path)["drug_id"].astype(str).tolist(),
+            "successful_drug_ids": frame["drug_id"].astype(str).tolist(),
+            "embedding_dimension": int(embedding_array.shape[1]),
+            "embedding_norm_min": float(embedding_norms.min()) if embedding_norms.size else None,
+            "embedding_norm_max": float(embedding_norms.max()) if embedding_norms.size else None,
             "elapsed_seconds": elapsed,
             "token_count_min": min(token_counts, default=None),
             "token_count_max": max(token_counts, default=None),
@@ -375,6 +427,49 @@ def _compare_embedding_runs(reference, candidate, config: dict) -> dict:
     }
 
 
+def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[object, dict]:
+    import json
+
+    target = Path(path)
+    manifest_path = target.with_suffix(".manifest.json")
+    if not manifest_path.exists():
+        raise AssertionError(f"Missing extraction manifest: {manifest_path}")
+    run = np.load(target)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    ids = run["drug_ids"].astype(str).tolist()
+    embeddings = run["embeddings"]
+    if manifest["batch_order"] != expected_order:
+        raise AssertionError(f"Expected {expected_order}, found {manifest['batch_order']}")
+    if manifest["output_sha256"] != sha256_file(target):
+        raise AssertionError("Manifest output hash does not match NPZ")
+    if manifest["rows_successful"] != len(ids) or manifest["successful_drug_ids"] != ids:
+        raise AssertionError("Manifest success rows/IDs do not match NPZ")
+    requested_ids = manifest["requested_drug_ids"]
+    failures = manifest["failures"]
+    if manifest["rows_requested"] != len(requested_ids):
+        raise AssertionError("Manifest requested row count does not match requested IDs")
+    if manifest["rows_successful"] + len(failures) != manifest["rows_requested"]:
+        raise AssertionError("Manifest successes and failures do not reconcile")
+    if "tokenizer/config.yaml" not in manifest["tokenizer_files"]:
+        raise AssertionError("Tokenizer manifest omits tokenizer/config.yaml")
+    if "tokenizer_loader_warnings" not in manifest:
+        raise AssertionError("Tokenizer construction warnings were not captured")
+    if embeddings.ndim != 2 or embeddings.shape[1] != 768:
+        raise AssertionError("Expected 768-dimensional MAMMAL vectors")
+    if manifest["embedding_dimension"] != embeddings.shape[1]:
+        raise AssertionError("Manifest embedding dimension does not match NPZ")
+    if not np.isfinite(embeddings).all():
+        raise AssertionError("Embedding run contains non-finite values")
+    norms = np.linalg.norm(embeddings, axis=1)
+    if not np.allclose(norms, 1.0, atol=1e-5, rtol=1e-5):
+        raise AssertionError("Embedding run contains non-unit vectors")
+    if not np.isclose(manifest["embedding_norm_min"], norms.min(), atol=1e-7):
+        raise AssertionError("Manifest minimum norm does not match NPZ")
+    if not np.isclose(manifest["embedding_norm_max"], norms.max(), atol=1e-7):
+        raise AssertionError("Manifest maximum norm does not match NPZ")
+    return run, manifest
+
+
 def validate_pilot(
     baseline_path: str | Path,
     same_order_path: str | Path,
@@ -383,9 +478,37 @@ def validate_pilot(
     report_path: str | Path,
 ) -> dict:
     config = validate_config(config_path)
-    baseline = np.load(baseline_path)
-    same_order = np.load(same_order_path)
-    reordered = np.load(reordered_path)
+    baseline, baseline_manifest = _load_and_validate_run(baseline_path, "input_order")
+    same_order, same_manifest = _load_and_validate_run(same_order_path, "input_order")
+    reordered, reordered_manifest = _load_and_validate_run(reordered_path, "reversed")
+    manifests = [baseline_manifest, same_manifest, reordered_manifest]
+    invariant_fields = [
+        "input_sha256",
+        "config_file_sha256",
+        "validated_config_sha256",
+        "code_revision",
+        "implementation_revision",
+        "checkpoint",
+        "checkpoint_revision",
+        "model_files",
+        "tokenizer_files",
+        "prompt_prefix",
+        "prompt_suffix",
+        "hidden_state",
+        "pooling",
+        "dtype",
+        "device",
+        "batch_size",
+        "max_sequence_length",
+        "unknown_token_rule",
+    ]
+    for field in invariant_fields:
+        if any(manifest[field] != manifests[0][field] for manifest in manifests[1:]):
+            raise AssertionError(f"Pilot manifests disagree on {field}")
+    run_ids = [manifest["run_id"] for manifest in manifests]
+    process_ids = [manifest["process_id"] for manifest in manifests]
+    if len(set(run_ids)) != 3 or len(set(process_ids)) != 3:
+        raise AssertionError("Pilot outputs are not from three distinct fresh processes")
     process_repeatability = _compare_embedding_runs(baseline, same_order, config)
     batch_order_invariance = _compare_embedding_runs(baseline, reordered, config)
     required = int(config["pilot_required_successes"])
@@ -406,6 +529,12 @@ def validate_pilot(
             "same_order_sha256": sha256_file(same_order_path),
             "reordered_sha256": sha256_file(reordered_path),
         },
+        "fresh_process_evidence": {
+            "distinct_run_ids": run_ids,
+            "distinct_process_ids": process_ids,
+            "started_at_utc": [manifest["started_at_utc"] for manifest in manifests],
+        },
+        "manifest_invariants_verified": invariant_fields,
     }
     write_json(report_path, report)
     return report

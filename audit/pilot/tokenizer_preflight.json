@@ -8,6 +8,7 @@
   "prompt_suffix": "<SEQUENCE_NATURAL_END><EOS>",
   "max_sequence_length": 2100,
   "unknown_token_rule": "reject",
+  "tokenizer_loader_warnings": [],
   "diagnostics": [
     {
       "drug_id": "PILOT-01",

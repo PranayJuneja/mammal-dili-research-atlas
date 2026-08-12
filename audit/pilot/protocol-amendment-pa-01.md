@@ -32,3 +32,32 @@ Baseline versus identical order will assess fresh-process repeatability. Baselin
 ## Disposition of earlier runs
 
 All earlier pilot outputs are diagnostic and withdrawn because they either predate the final fixture or contain unknown-token IDs. They are not evidence for G2 acceptance and will not enter modelling.
+
+## Alternatives considered
+
+| Alternative | Disposition | Reason |
+|---|---|---|
+| Keep the newer vLLM prompt | Rejected | It yields unknown-token IDs for every pilot row under the pinned checkpoint tokenizer, so the vectors do not represent the stated molecular contract. |
+| Switch to a different checkpoint or tokenizer | Rejected | This would change the frozen representation and broaden the amendment beyond a compatibility correction. |
+| Remove the near-limit fixture | Rejected | It would weaken the prospective overlength/truncation test required by the pilot composition contract. |
+| Stop and report MAMMAL infeasible | Retained fallback | This remains mandatory if the amended three-process run fails; there will be no further technical correction. |
+| Use the pinned checkpoint-native syntax and keep the revised fixture | Selected | It is supported by pinned source examples, tokenizes every frozen row without unknowns, and changes no outcome-related method. |
+
+## Impact assessment
+
+- **Estimand:** no effect. The primary estimand remains mean repeated scaffold-grouped `AUROC(D) - AUROC(B)` on common eligible rows.
+- **Bias:** the change reduces representation error by preventing unsupported control strings from becoming unknown tokens. It creates no outcome-selection pathway because the defect and correction were established without DILI labels or predictive performance.
+- **Schedule/resources:** adds an independent amendment review, a clean re-lock, and three new CPU pilot processes. Earlier diagnostic compute is discarded.
+- **KUHS documents:** the methods and reproducibility wording must name the checkpoint-native prompt and disclose PA-01; title, objectives, population, endpoint and analysis remain unchanged.
+- **IEC determination:** no participant, personal-data, intervention, specimen, animal, source-data, endpoint or analysis-population change is introduced. Whether the existing private IEC determination requires notification remains an institutional decision and must be explicitly recorded below; this repository does not self-declare exemption or waive notification.
+
+## Required approvals and notification disposition
+
+| Role/action | Status | Evidence boundary |
+|---|---|---|
+| Project owner acknowledgement | Pending explicit PA-01 confirmation | May be recorded in a non-identifying public governance note. |
+| Faculty guide approval | Pending explicit private confirmation | Names and signatures remain outside the public repository; only dated confirmation is recorded here. |
+| Relevant technical/scientific expert approval | Pending independent validator verdict | Fermat independently verifies the prompt, hashes, pilot, and acceptance implementation. |
+| IEC notification/approval disposition | Pending owner/guide confirmation against the private determination | Record `not required by determination`, `notified`, or `approved`, with date; do not copy identifying records here. |
+
+Accepted extraction remains prohibited while any row is pending. Once all are confirmed, change the amendment status from `PROPOSED` to `APPROVED`, add the decision date and non-identifying evidence note, re-lock the configuration if needed, and only then launch the three fresh processes.
