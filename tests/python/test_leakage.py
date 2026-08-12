@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from mammal_dili.curation.structures import _resolve_duplicates
+from mammal_dili.modelling import nested_cv
 from mammal_dili.modelling.nested_cv import FeatureSet, _pipeline, split_development_and_update
 
 
@@ -48,3 +50,62 @@ def test_update_cohort_never_enters_development_fit_object() -> None:
     development, update = split_development_and_update(frame)
     assert development["drug_id"].tolist() == ["old-1", "old-2"]
     assert update["drug_id"].tolist() == ["new-1"]
+
+
+def test_nested_cv_passes_only_original_list_to_feature_loading(tmp_path, monkeypatch) -> None:
+    rows = []
+    for index in range(20):
+        rows.append(
+            {
+                "drug_id": f"old-{index}",
+                "release_group": "original-list",
+                "outcome": index % 2,
+                "scaffold_id": f"group-{index}",
+                "compound_name_source": f"old {index}",
+                "dili_category": "vMost-DILI-concern" if index % 2 else "vNo-DILI-concern",
+                **{f"outer_fold_repeat_{repeat}": index % 5 for repeat in range(5)},
+            }
+        )
+    rows.append(
+        {
+            "drug_id": "new-never-fit",
+            "release_group": "added-in-2.0",
+            "outcome": 1,
+            "scaffold_id": "new-group",
+            "compound_name_source": "new",
+            "dili_category": "vMost-DILI-concern",
+            **{f"outer_fold_repeat_{repeat}": 0 for repeat in range(5)},
+        }
+    )
+    folds = tmp_path / "folds.csv"
+    pd.DataFrame(rows).to_csv(folds, index=False)
+    ids = np.array([row["drug_id"] for row in rows])
+    conventional = tmp_path / "conventional.npz"
+    mammal = tmp_path / "mammal.npz"
+    np.savez_compressed(
+        conventional,
+        drug_ids=ids,
+        descriptors=np.zeros((len(ids), 1)),
+        morgan=np.zeros((len(ids), 1)),
+    )
+    np.savez_compressed(mammal, drug_ids=ids, embeddings=np.zeros((len(ids), 1)))
+    seen: list[list[str]] = []
+
+    def stop_after_feature_load(model, drug_ids, conventional_path, mammal_path):
+        seen.append(drug_ids)
+        raise RuntimeError("stop")
+
+    monkeypatch.setattr(nested_cv, "require_protocol_lock", lambda: {"config_bundle_sha256": "x"})
+    monkeypatch.setattr(nested_cv, "load_feature_set", stop_after_feature_load)
+    with pytest.raises(RuntimeError, match="stop"):
+        nested_cv.run_nested_cv(
+            folds,
+            conventional,
+            mammal,
+            "configs/analysis.yaml",
+            tmp_path / "predictions.csv",
+        )
+
+    assert seen
+    assert "new-never-fit" not in seen[0]
+    assert len(seen[0]) == 20

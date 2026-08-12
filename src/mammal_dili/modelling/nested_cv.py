@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -176,6 +177,8 @@ def run_nested_cv(
     mammal_ids = set(np.load(mammal_path)["drug_ids"].astype(str))
     common = conventional_ids & mammal_ids
     frame = frame[frame["drug_id"].astype(str).isin(common)].copy().reset_index(drop=True)
+    development, update = split_development_and_update(frame)
+    frame = development.reset_index(drop=True)
     drug_ids = frame["drug_id"].astype(str).tolist()
     y = frame["outcome"].astype(int).to_numpy()
     groups = frame["scaffold_id"].astype(str).to_numpy()
@@ -252,6 +255,11 @@ def run_nested_cv(
         {
             "prediction_rows": len(result),
             "drugs": len(frame),
+            "analysis_population": "eligible original-list development cohort",
+            "update_cohort_held_out_drugs": len(update),
+            "update_cohort_drug_ids_sha256": hashlib.sha256(
+                "\n".join(sorted(update["drug_id"].astype(str))).encode("utf-8")
+            ).hexdigest(),
             "models": 4,
             "repeats": len(repeat_columns),
             "folds_sha256": sha256_file(folds_path),
