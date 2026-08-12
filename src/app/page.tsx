@@ -14,6 +14,7 @@ import { DatasetDistribution } from "@/components/dataset-distribution";
 import { GlossarySearch } from "@/components/glossary-search";
 import { MoleculeField } from "@/components/molecule-field";
 import { OutcomeExplorer } from "@/components/outcome-explorer";
+import { ResearchResults, ResultDashboard } from "@/components/result-dashboard";
 import { SiteHeader } from "@/components/site-header";
 import { StudySpine } from "@/components/study-spine";
 import { limitations, models, safeguards, sources, studyStats } from "@/data/research";
@@ -28,6 +29,7 @@ type PrimaryResult = {
 export default function HomePage() {
   const complete = generatedResults.status === "complete";
   const primary = generatedResults.primary as PrimaryResult | null;
+  const researchResults = generatedResults as unknown as ResearchResults;
   return (
     <>
       <a className="skip-link" href="#main-content">Skip to main content</a>
@@ -37,9 +39,9 @@ export default function HomePage() {
           <div className="hero-copy">
             <div className="status-line">
               <span className="live-dot" />
-              {complete ? "Frozen analysis complete" : "Study execution underway"}
+              {complete ? "Frozen analysis complete" : "Technical design validated"}
               <span aria-hidden="true">·</span>
-              Governance clearance reported
+              {complete ? "Independent review passed" : "Amendment sign-off pending"}
             </div>
             <p className="hero-kicker">One question. Four matched models. No shortcuts.</p>
             <h1>
@@ -99,19 +101,21 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <h3>The protocol is answer-ready; the performance answer is being computed.</h3>
-                  <p>{generatedResults.answer}</p>
+                  <h3>The technical pipeline is ready; outcome execution is correctly paused.</h3>
+                  <p>Independent review passed the cohort, representation, leakage, lineage, and uncertainty controls. PA-01 and PA-02 still require dated guide and IEC disposition before extraction can begin.</p>
                 </>
               )}
               <ul className="check-list">
                 <li><Check weight="bold" />Primary comparison locked</li>
                 <li><Check weight="bold" />FDA source captured and validated</li>
                 <li><Check weight="bold" />Official MAMMAL revisions pinned</li>
-                <li>{complete ? <Check weight="bold" /> : <Flask weight="fill" />}{complete ? "Frozen results generated and validated" : "Embedding and modelling run in progress"}</li>
+                <li>{complete ? <Check weight="bold" /> : <Flask weight="fill" />}{complete ? "Frozen results generated and validated" : "Embedding and modelling await amendment approval"}</li>
               </ul>
             </article>
           </div>
         </section>
+
+        <ResultDashboard data={researchResults} />
 
         <section className="section section-shell dataset-section">
           <div className="dataset-copy">

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -25,6 +26,36 @@ RESULT_PATHS = {
     "stratified_random": Path("artifacts/results/random_split_results.json"),
     "class_balanced": Path("artifacts/results/balanced_results.json"),
 }
+
+SITE_DOWNLOAD_FILES = (
+    "research_report.md",
+    "plain_language_summary.md",
+    "tripod_ai_applicability.md",
+    "presentation_outline.md",
+    "kuhs_submission_protocol.md",
+    "primary_effect.svg",
+    "repeat_stability.svg",
+    "model_performance.csv",
+    "model_metric_uncertainty.csv",
+    "sensitivity_analyses.csv",
+    "important_false_negatives.csv",
+    "research_summary.json",
+    "report_manifest.json",
+)
+
+
+def _publish_site_bundle(report_directory: Path, public_directory: Path) -> dict[str, str]:
+    public_directory.mkdir(parents=True, exist_ok=True)
+    published: dict[str, str] = {}
+    for filename in SITE_DOWNLOAD_FILES:
+        source = report_directory / filename
+        if not source.is_file():
+            raise AssertionError(f"Required website report file is missing: {source}")
+        destination = public_directory / filename
+        shutil.copyfile(source, destination)
+        published[filename] = sha256_file(destination)
+    write_json(public_directory / "download_manifest.json", {"files": published})
+    return published
 
 
 def _load_json(path: str | Path) -> dict:
@@ -291,6 +322,152 @@ This study evaluates drug-level prediction of curated DILI concern within DILIra
 """
 
 
+def _plain_language_summary(summary: dict) -> str:
+    primary = summary["primary"]
+    lower, upper = primary["ci95"]
+    update = summary["update_transport"]["paired_delta_auroc"]
+    return f"""# Plain-language research summary
+
+## The question
+
+We tested whether adding one fixed numerical description made by the MAMMAL molecular foundation model improves a strong conventional chemistry model for ranking medicines by established drug-induced liver-injury concern.
+
+## What we did
+
+The comparison was deliberately matched. Model B used ordinary physicochemical measurements plus a Morgan fingerprint. Model D used exactly the same information and learner, then added one frozen 768-number MAMMAL vector. Related molecular cores stayed together during validation so close chemical relatives could not make performance look unrealistically good.
+
+The primary analysis used {summary['flow']['development_drugs']:,} eligible drugs from the original DILIrank list. Another {summary['flow']['update_drugs']:,} eligible drugs added in DILIrank 2.0 were held aside until development was finished.
+
+## The answer
+
+Adding MAMMAL changed AUROC by **{primary['delta_auroc']:+.3f}**. The 95% confidence interval was **{lower:+.3f} to {upper:+.3f}**. {primary['interpretation']}
+
+In the untouched added-drug cohort, the corresponding exploratory difference was {update['estimate']:+.3f} (95% CI {update['ci95'][0]:+.3f} to {update['ci95'][1]:+.3f}). This secondary result does not replace the primary answer.
+
+## What this does not mean
+
+This is a drug-level research benchmark. It does not estimate one patient's chance of liver injury, prove causality for a medicine, or recommend prescribing. Dose, exposure, metabolism, genetics, illness, immune response, and co-medications are outside the primary structure-only model.
+
+## Why the result is credible
+
+The checkpoint, tokenizer, prompt, pooling rule, molecule set, comparator, folds, learner, metric, practical benchmark, resampling method, and interpretation wording were frozen before performance was opened. Independent gates checked curation, extraction, feature/fold lineage, prediction coverage, and report regeneration.
+"""
+
+
+def _tripod_ai_mapping() -> str:
+    rows = [
+        ("Title and abstract", "research_report.md — title and structured abstract", "Reported"),
+        ("Background and objectives", "research_report.md — Research question and estimand", "Reported"),
+        ("Source of data", "study_flow.json; source manifests; cohort audit", "Reported"),
+        ("Participants / units", "Drug-level eligible DILIrank records; no human participants", "Reported"),
+        ("Outcome", "DILIrank vMost/vLess versus vNo coding", "Reported"),
+        ("Predictors", "Descriptor, Morgan, and frozen MAMMAL contracts", "Reported"),
+        ("Sample size", "Pre-performance precision simulation and diagnostics", "Reported"),
+        ("Missing data", "Common-complete 100% feature contract; descriptor median inside training folds", "Reported"),
+        ("Model development", "Repeated nested scaffold-grouped L2 logistic regression", "Reported"),
+        ("Model performance", "Model table, ROC/PR/calibration files, repeat stability", "Reported"),
+        ("Model evaluation", "Primary development validation plus untouched update transport", "Reported"),
+        ("Class imbalance", "Primary unweighted fit and pre-specified balanced robustness analysis", "Reported"),
+        ("Uncertainty", "2,000 complete-scaffold paired bootstrap resamples", "Reported"),
+        ("Interpretation", "Locked zero and +0.03 confidence-interval regions", "Reported"),
+        ("Limitations", "research_report.md and generated website boundaries", "Reported"),
+        ("Protocol and registration", "Versioned protocol, PA-01, PA-02, G2/G3/G4/G5 locks", "Reported"),
+        ("Data/code availability", "REPRODUCING.md and public archive subject to licences/approval", "Reported with conditions"),
+        ("Patient/public involvement", "Not applicable to this public drug-record benchmark", "Not applicable"),
+    ]
+    body = "\n".join(f"| {item} | {location} | {status} |" for item, location, status in rows)
+    return f"""# TRIPOD+AI applicability map
+
+This project is a comparative drug-level prediction benchmark rather than a clinical patient-risk model. Items are mapped to the closest applicable report evidence; `Not applicable` is used instead of inventing patient-level procedures.
+
+| Reporting domain | Evidence location | Disposition |
+|---|---|---|
+{body}
+
+The student and faculty guide must check this map against the current official TRIPOD+AI checklist before submission. This file is an applicability aid, not a certification claim.
+"""
+
+
+def _presentation_outline(summary: dict) -> str:
+    primary = summary["primary"]
+    return f"""# Presentation and poster outline
+
+## Slide 1 — One question
+Does one frozen MAMMAL vector improve a strong conventional molecular baseline for drug-level DILI concern?
+
+## Slide 2 — Evidence flow
+1,336 FDA records → 982 non-ambiguous records reviewed → {summary['flow']['eligible_drugs']} eligible → {summary['flow']['development_drugs']} development + {summary['flow']['update_drugs']} untouched update drugs.
+
+## Slide 3 — Matched experiment
+Show Models A–D. Emphasise that B versus D changes only the added MAMMAL block.
+
+## Slide 4 — Leakage controls
+Show chemical grouping, repeated nested validation, training-fold-only preprocessing, and the outcome-blind representation lock.
+
+## Slide 5 — Primary answer
+Display `primary_effect.svg`: ΔAUROC {primary['delta_auroc']:+.3f}, 95% CI {primary['ci95'][0]:+.3f} to {primary['ci95'][1]:+.3f}. State the locked interpretation verbatim: {primary['interpretation']}
+
+## Slide 6 — More than AUROC
+Show PR-AUROC, Brier score, calibration, threshold performance, and `repeat_stability.svg`.
+
+## Slide 7 — Robustness and transport
+Compare vMost-vNo, balanced-class, optimistic random-split, and untouched update results. Keep the random split explicitly non-primary.
+
+## Slide 8 — Important false negatives
+Show persistence below both Youden and sensitivity-prioritised thresholds with curation context. Do not use errors to alter the fitted pipeline.
+
+## Slide 9 — Boundaries
+Drug is not patient; concern is not perfect truth; structure omits exposure and host biology; pretraining overlap is unknown; one frozen recipe is not the model family.
+
+## Slide 10 — Reproducibility
+Show the protocol/config/code locks, G2/G3/G4/G5 hashes, public reproduction path, and the final scope statement.
+
+## Poster arrangement
+Use a three-column flow: question/design → primary effect and metrics → robustness/errors/limitations. Keep the primary effect directly below the B-versus-D diagram and reserve the largest visual area for the answer, not the technology branding.
+"""
+
+
+def _kuhs_submission_protocol(summary: dict) -> tuple[str, dict]:
+    sections = {
+        "title": "Incremental value of frozen MAMMAL molecular embeddings for drug-level liver-injury concern classification",
+        "introduction": (
+            "Drug-induced liver injury is a clinically important and mechanistically diverse safety problem. "
+            "DILIrank 2.0 organises FDA-approved drugs by established concern using regulatory labelling and causality evidence. "
+            "Traditional molecular prediction uses physicochemical descriptors and substructure fingerprints, while foundation models can encode broader learned regularities. "
+            "A fair test must ask whether a frozen representation adds information beyond a strong conventional baseline, without allowing related chemical scaffolds or outcome-guided engineering to exaggerate performance. "
+            "This study therefore compares matched logistic-regression models under repeated nested scaffold-grouped validation, with one primary contrast and a prospectively defined practical-gain benchmark."
+        ),
+        "objectives": (
+            "Primary: estimate the paired change in AUROC when one frozen MAMMAL embedding is added to descriptors and a Morgan fingerprint. "
+            "Secondary: describe calibration, precision-recall performance, threshold behaviour, important vMost false negatives, pre-specified robustness analyses, and transport to drugs added in DILIrank 2.0."
+        ),
+        "methodology": (
+            f"Public DILIrank 2.0 records were parsed and checked against fixed counts. Ambiguous labels were excluded. Chemical identities, active moieties, parent structures, stereochemistry, duplicate parents, conflicts, biologics, mixtures and unsupported complexes were adjudicated under a versioned rule set. Of 1,336 records, {summary['flow']['eligible_drugs']} were structurally eligible. The primary development population comprised {summary['flow']['development_drugs']} original-list drugs; {summary['flow']['update_drugs']} added drugs were isolated before grouping and retained for one exploratory transport evaluation. "
+            "Model A used pre-specified physicochemical descriptors. Model B added 2,048-bit radius-2 chirality-aware Morgan fingerprints. Model C used a frozen 768-dimensional MAMMAL vector. Model D combined Model B with MAMMAL. All models used the same L2-regularised logistic-regression family and tuning grid. MAMMAL weights, checkpoint revision, tokenizer files, checkpoint-native prompt, final encoder state, attention-mask-aware mean pooling, L2 normalisation, length rule and CPU runtime were frozen after a label-blind technical pilot. "
+            "Ring-containing drugs were grouped by Bemis–Murcko scaffold and acyclic drugs by fingerprint similarity. The primary analysis used five repeats of nested five-fold scaffold-grouped cross-validation. Imputation, scaling, regularisation and thresholds were selected inside training partitions. The primary estimand was the arithmetic mean of repeat-level AUROC(Model D) minus AUROC(Model B). A 95% interval used 2,000 paired complete-scaffold bootstrap resamples and was interpreted against zero and a +0.03 practical benchmark. Secondary measures included PR-AUROC, Brier score, calibration, sensitivity, specificity, precision and balanced accuracy. Pre-specified sensitivity analyses examined vMost versus vNo, class weighting and an explicitly optimistic random split. All stages were hash-bound and independently gated before result narration."
+        ),
+        "implications": (
+            f"The observed paired AUROC change was {summary['primary']['delta_auroc']:+.3f} with a 95% confidence interval from {summary['primary']['ci95'][0]:+.3f} to {summary['primary']['ci95'][1]:+.3f}. {summary['primary']['interpretation']} "
+            "The result concerns one frozen representation and one drug-level benchmark. It does not estimate patient risk, prove drug-specific causality, or guide prescribing."
+        ),
+        "references": (
+            "1. US Food and Drug Administration. Drug-Induced Liver Injury Rank (DILIrank) 2.0 Dataset. "
+            "2. Shoshan Y, Raboh M, Ozery-Flato M, et al. MAMMAL - Molecular Aligned Multi-Modal Architecture and Language for biomedical discovery. npj Drug Discov. 2026;3:14. doi:10.1038/s44386-026-00047-4. "
+            "3. Rogers D, Hahn M. Extended-connectivity fingerprints. J Chem Inf Model. 2010;50:742-754. "
+            "4. Collins GS, et al. TRIPOD+AI statement. BMJ. 2024;385:e078378."
+        ),
+    }
+    limits = {"title": 25, "introduction": 300, "objectives": 100, "methodology": 800, "implications": 100, "references": 300}
+    counts = {name: len(text.split()) for name, text in sections.items()}
+    if any(counts[name] > limits[name] for name in sections):
+        raise AssertionError("Generated KUHS section exceeds its locked word limit")
+    markdown = "# Anonymised KUHS submission protocol\n\n" + "\n\n".join(
+        f"## {name.title()}\n\n{text}\n\n*Word count: {counts[name]} / {limits[name]}*"
+        for name, text in sections.items()
+    )
+    return markdown + "\n", {name: {"words": counts[name], "limit": limits[name]} for name in sections}
+
+
 def generate_research_report(
     cohort_path: str | Path,
     folds_path: str | Path,
@@ -304,6 +481,7 @@ def generate_research_report(
     balanced_results_path: str | Path,
     output_directory: str | Path,
     site_data_path: str | Path | None = None,
+    site_public_directory: str | Path | None = None,
 ) -> dict:
     g3 = require_feature_fold_lock()
     g4 = require_prediction_lock()
@@ -468,6 +646,20 @@ def generate_research_report(
     if site_data_path is not None:
         write_json(site_data_path, summary)
     (target / "research_report.md").write_text(_paper_markdown(summary), encoding="utf-8")
+    (target / "plain_language_summary.md").write_text(
+        _plain_language_summary(summary), encoding="utf-8"
+    )
+    (target / "tripod_ai_applicability.md").write_text(
+        _tripod_ai_mapping(), encoding="utf-8"
+    )
+    (target / "presentation_outline.md").write_text(
+        _presentation_outline(summary), encoding="utf-8"
+    )
+    kuhs_protocol, kuhs_counts = _kuhs_submission_protocol(summary)
+    (target / "kuhs_submission_protocol.md").write_text(
+        kuhs_protocol, encoding="utf-8"
+    )
+    write_json(target / "kuhs_word_counts.json", kuhs_counts)
     write_json(
         target / "report_manifest.json",
         {
@@ -482,4 +674,6 @@ def generate_research_report(
             },
         },
     )
+    if site_public_directory is not None:
+        _publish_site_bundle(target, Path(site_public_directory))
     return summary

@@ -295,6 +295,7 @@ def main() -> None:
             "artifacts/results/balanced_results.json",
             "artifacts/report",
             "src/data/generated-results.json",
+            "public/results",
         )
         print(json.dumps(result["primary"], indent=2))
 

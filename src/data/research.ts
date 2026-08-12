@@ -72,7 +72,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Signed lock declaration", "Decision record", "Named reviewers", "KUHS requirements record"],
     stopRule: "No technical pilot or outcome analysis without the written institutional determination.",
-    status: "cleared",
+    status: "next",
   },
   {
     id: "pilot",
