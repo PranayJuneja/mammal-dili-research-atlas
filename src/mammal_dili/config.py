@@ -75,6 +75,8 @@ class MammalConfig(StrictModel):
     special_tokens: str
     max_sequence_length: int
     overlength_rule: str
+    unknown_token_id: int
+    unknown_token_rule: Literal["reject"]
     dtype: str
     device: str
     batch_size: int

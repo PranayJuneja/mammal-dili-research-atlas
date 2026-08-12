@@ -1,0 +1,193 @@
+{
+  "passed": true,
+  "rows": 20,
+  "input_sha256": "de5812715d85b854d06f83c60c0a15156e950e63d841ea066ce29f87e2f28eaa",
+  "config_file_sha256": "7bc5298150239660494bedb328403264c70e1e5a9bc00c2ecb1184b965661b37",
+  "checkpoint_revision": "6d319d8dcf97f8821635327fc8cda24670553daa",
+  "prompt_prefix": "<@TOKENIZER-TYPE=SMILES><MOLECULAR_ENTITY><MOLECULAR_ENTITY_SMALL_MOLECULE><SEQUENCE_NATURAL_START>",
+  "prompt_suffix": "<SEQUENCE_NATURAL_END><EOS>",
+  "max_sequence_length": 2100,
+  "unknown_token_rule": "reject",
+  "diagnostics": [
+    {
+      "drug_id": "PILOT-01",
+      "rdkit_valid": true,
+      "smiles_characters": 3,
+      "attended_tokens": 6,
+      "sequence_length": 6,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-02",
+      "rdkit_valid": true,
+      "smiles_characters": 21,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-03",
+      "rdkit_valid": true,
+      "smiles_characters": 17,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-04",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 9,
+      "sequence_length": 9,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-05",
+      "rdkit_valid": true,
+      "smiles_characters": 16,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-06",
+      "rdkit_valid": true,
+      "smiles_characters": 15,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-07",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-08",
+      "rdkit_valid": true,
+      "smiles_characters": 20,
+      "attended_tokens": 11,
+      "sequence_length": 11,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-09",
+      "rdkit_valid": true,
+      "smiles_characters": 11,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-10",
+      "rdkit_valid": true,
+      "smiles_characters": 11,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-11",
+      "rdkit_valid": true,
+      "smiles_characters": 6,
+      "attended_tokens": 9,
+      "sequence_length": 9,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-12",
+      "rdkit_valid": true,
+      "smiles_characters": 20,
+      "attended_tokens": 12,
+      "sequence_length": 12,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-13",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 7,
+      "sequence_length": 7,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-14",
+      "rdkit_valid": true,
+      "smiles_characters": 11,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-15",
+      "rdkit_valid": true,
+      "smiles_characters": 13,
+      "attended_tokens": 7,
+      "sequence_length": 7,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-16",
+      "rdkit_valid": true,
+      "smiles_characters": 7,
+      "attended_tokens": 6,
+      "sequence_length": 6,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-17",
+      "rdkit_valid": true,
+      "smiles_characters": 20,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-18",
+      "rdkit_valid": true,
+      "smiles_characters": 23,
+      "attended_tokens": 11,
+      "sequence_length": 11,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-19",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 11,
+      "sequence_length": 11,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-20",
+      "rdkit_valid": true,
+      "smiles_characters": 2324,
+      "attended_tokens": 1997,
+      "sequence_length": 1997,
+      "unknown_token_count": 0,
+      "warnings": []
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import subprocess
 import time
 import warnings
 from pathlib import Path
@@ -9,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from mammal_dili.config import validate_config
-from mammal_dili.io import sha256_file, write_json
+from mammal_dili.io import sha256_file, sha256_json, write_json
 
 
 def make_prompt(smiles: str, config: dict) -> str:
@@ -84,6 +85,72 @@ def _load_runtime(config: dict):
     return torch, model, tokenizer, snapshot
 
 
+def preflight_pilot(
+    input_path: str | Path, config_path: str | Path, report_path: str | Path
+) -> dict:
+    """Validate chemistry and pinned-tokenizer behavior without loading model weights."""
+    from fuse.data.tokenizers.modular_tokenizer.op import ModularTokenizerOp
+    from huggingface_hub import snapshot_download
+    from rdkit import Chem
+
+    config = validate_config(config_path)
+    frame = pd.read_csv(input_path)
+    snapshot = Path(
+        snapshot_download(
+            repo_id=config["checkpoint"], revision=config["checkpoint_revision"]
+        )
+    )
+    tokenizer = ModularTokenizerOp.from_pretrained(snapshot / "tokenizer")
+    diagnostics: list[dict] = []
+    for row in frame.to_dict(orient="records"):
+        smiles = row["standardised_isomeric_smiles"]
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            tokenized = tokenizer(
+                {"text": make_prompt(smiles, config)},
+                key_in="text",
+                key_out_tokens_ids="input_ids",
+                key_out_attention_mask="attention_mask",
+            )
+        ids = tokenized["input_ids"]
+        mask = tokenized["attention_mask"]
+        ids = ids.tolist() if hasattr(ids, "tolist") else list(ids)
+        mask = mask.tolist() if hasattr(mask, "tolist") else list(mask)
+        warning_messages = sorted({str(item.message) for item in caught})
+        diagnostics.append(
+            {
+                "drug_id": row["drug_id"],
+                "rdkit_valid": Chem.MolFromSmiles(smiles) is not None,
+                "smiles_characters": len(smiles),
+                "attended_tokens": int(sum(mask)),
+                "sequence_length": len(ids),
+                "unknown_token_count": ids.count(int(config["unknown_token_id"])),
+                "warnings": warning_messages,
+            }
+        )
+    passed = len(diagnostics) == int(config["pilot_total"]) and all(
+        row["rdkit_valid"]
+        and row["sequence_length"] <= int(config["max_sequence_length"])
+        and row["unknown_token_count"] == 0
+        and not any("unknown token" in item.casefold() for item in row["warnings"])
+        for row in diagnostics
+    )
+    report = {
+        "passed": passed,
+        "rows": len(diagnostics),
+        "input_sha256": sha256_file(input_path),
+        "config_file_sha256": sha256_file(config_path),
+        "checkpoint_revision": config["checkpoint_revision"],
+        "prompt_prefix": config["prompt_prefix"],
+        "prompt_suffix": config["prompt_suffix"],
+        "max_sequence_length": config["max_sequence_length"],
+        "unknown_token_rule": config["unknown_token_rule"],
+        "diagnostics": diagnostics,
+    }
+    write_json(report_path, report)
+    return report
+
+
 def extract_embeddings(
     input_path: str | Path,
     config_path: str | Path,
@@ -97,6 +164,11 @@ def extract_embeddings(
         raise ValueError(f"Input must include {sorted(required)}")
     if reverse_order:
         frame = frame.iloc[::-1].reset_index(drop=True)
+    input_sha256 = sha256_file(input_path)
+    config_file_sha256 = sha256_file(config_path)
+    implementation_revision = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], text=True
+    ).strip()
     torch, model, tokenizer, snapshot = _load_runtime(config)
     embeddings: list[np.ndarray] = []
     token_counts: list[int] = []
@@ -142,6 +214,20 @@ def extract_embeddings(
                 mask = tokenized["attention_mask"]
                 ids = ids.tolist() if hasattr(ids, "tolist") else list(ids)
                 mask = mask.tolist() if hasattr(mask, "tolist") else list(mask)
+                warning_messages = sorted({str(item.message) for item in caught})
+                unknown_count = ids.count(int(config["unknown_token_id"]))
+                if unknown_count or any("unknown token" in item.casefold() for item in warning_messages):
+                    failures.append(
+                        {
+                            "drug_id": row["drug_id"],
+                            "reason": "TOKENIZATION_FAILURE",
+                            "detail": "unknown token rejected",
+                            "unknown_token_id": int(config["unknown_token_id"]),
+                            "unknown_token_count": unknown_count,
+                            "warnings": warning_messages,
+                        }
+                    )
+                    continue
                 if len(ids) > int(config["max_sequence_length"]):
                     failures.append({"drug_id": row["drug_id"], "reason": "OVERLENGTH", "tokens": len(ids)})
                     continue
@@ -155,7 +241,9 @@ def extract_embeddings(
                         "token_id_prefix": ids[:4],
                         "token_id_suffix": ids[-3:],
                         "special_token_layout": config["special_tokens"],
-                        "warnings": sorted({str(item.message) for item in caught}),
+                        "unknown_token_id": int(config["unknown_token_id"]),
+                        "unknown_token_count": unknown_count,
+                        "warnings": warning_messages,
                     }
                 )
                 token_ids.append(ids)
@@ -217,6 +305,13 @@ def extract_embeddings(
             },
             "tokenizer_revision": config["checkpoint_revision"],
             "code_revision": config["code_revision"],
+            "implementation_revision": implementation_revision,
+            "input_path": str(input_path),
+            "input_sha256": input_sha256,
+            "config_path": str(config_path),
+            "config_file_sha256": config_file_sha256,
+            "validated_config_sha256": sha256_json(config),
+            "batch_order": "reversed" if reverse_order else "input_order",
             "prompt_prefix": config["prompt_prefix"],
             "prompt_suffix": config["prompt_suffix"],
             "hidden_state": config["hidden_state"],
@@ -224,6 +319,8 @@ def extract_embeddings(
             "special_tokens": config["special_tokens"],
             "max_sequence_length": config["max_sequence_length"],
             "overlength_rule": config["overlength_rule"],
+            "unknown_token_id": config["unknown_token_id"],
+            "unknown_token_rule": config["unknown_token_rule"],
             "dtype": config["dtype"],
             "device": config["device"],
             "batch_size": batch_size,
@@ -249,34 +346,66 @@ def extract_embeddings(
     return target
 
 
-def validate_pilot(first_path: str | Path, second_path: str | Path, config_path: str | Path, report_path: str | Path) -> dict:
-    config = validate_config(config_path)
-    first = np.load(first_path)
-    second = np.load(second_path)
-    first_map = dict(zip(first["drug_ids"], first["embeddings"], strict=True))
-    second_map = dict(zip(second["drug_ids"], second["embeddings"], strict=True))
-    common = sorted(set(first_map) & set(second_map))
-    differences = [float(np.max(np.abs(first_map[key] - second_map[key]))) for key in common]
-    finite = all(np.isfinite(first_map[key]).all() and np.isfinite(second_map[key]).all() for key in common)
+def _compare_embedding_runs(reference, candidate, config: dict) -> dict:
+    reference_map = dict(zip(reference["drug_ids"], reference["embeddings"], strict=True))
+    candidate_map = dict(zip(candidate["drug_ids"], candidate["embeddings"], strict=True))
+    common = sorted(set(reference_map) & set(candidate_map))
+    differences = [
+        float(np.max(np.abs(reference_map[key] - candidate_map[key]))) for key in common
+    ]
+    finite = all(
+        np.isfinite(reference_map[key]).all() and np.isfinite(candidate_map[key]).all()
+        for key in common
+    )
     repeatable = all(
         np.allclose(
-            first_map[key],
-            second_map[key],
+            reference_map[key],
+            candidate_map[key],
             atol=float(config["repeatability_atol"]),
             rtol=float(config["repeatability_rtol"]),
         )
         for key in common
     )
-    passed = len(common) >= int(config["pilot_required_successes"]) and finite and repeatable
+    return {
+        "same_successful_ids": set(reference_map) == set(candidate_map),
+        "successful_in_both": len(common),
+        "finite": finite,
+        "within_tolerance": repeatable,
+        "maximum_absolute_difference": max(differences, default=None),
+    }
+
+
+def validate_pilot(
+    baseline_path: str | Path,
+    same_order_path: str | Path,
+    reordered_path: str | Path,
+    config_path: str | Path,
+    report_path: str | Path,
+) -> dict:
+    config = validate_config(config_path)
+    baseline = np.load(baseline_path)
+    same_order = np.load(same_order_path)
+    reordered = np.load(reordered_path)
+    process_repeatability = _compare_embedding_runs(baseline, same_order, config)
+    batch_order_invariance = _compare_embedding_runs(baseline, reordered, config)
+    required = int(config["pilot_required_successes"])
+    passed = all(
+        comparison["successful_in_both"] >= required
+        and comparison["same_successful_ids"]
+        and comparison["finite"]
+        and comparison["within_tolerance"]
+        for comparison in (process_repeatability, batch_order_invariance)
+    )
     report = {
         "passed": passed,
-        "successful_in_both": len(common),
-        "required_successes": int(config["pilot_required_successes"]),
-        "finite": finite,
-        "repeatable": repeatable,
-        "maximum_absolute_difference": max(differences, default=None),
-        "first_output_sha256": sha256_file(first_path),
-        "second_output_sha256": sha256_file(second_path),
+        "required_successes": required,
+        "process_repeatability": process_repeatability,
+        "batch_order_invariance": batch_order_invariance,
+        "outputs": {
+            "baseline_sha256": sha256_file(baseline_path),
+            "same_order_sha256": sha256_file(same_order_path),
+            "reordered_sha256": sha256_file(reordered_path),
+        },
     }
     write_json(report_path, report)
     return report

@@ -3,13 +3,15 @@ checkpoint: "ibm-research/biomed.omics.bl.sm.ma-ted-458m"
 checkpoint_revision: "6d319d8dcf97f8821635327fc8cda24670553daa"
 code_repository: "https://github.com/BiomedSciAI/biomed-multi-alignment"
 code_revision: "8cc56e9494b489ca86a63b76fa4cd2921f8af7f7"
-prompt_prefix: "<@TOKENIZER-TYPE=SMILES><MOLECULAR_ENTITY><MOLECULAR_ENTITY_OF_TYPE_SMALL_MOL>"
-prompt_suffix: "<EOS>"
+prompt_prefix: "<@TOKENIZER-TYPE=SMILES><MOLECULAR_ENTITY><MOLECULAR_ENTITY_SMALL_MOLECULE><SEQUENCE_NATURAL_START>"
+prompt_suffix: "<SEQUENCE_NATURAL_END><EOS>"
 hidden_state: "final encoder last_hidden_state"
 pooling: "attention-mask-aware mean over all non-padding prompt tokens, then L2 normalize"
 special_tokens: "included when attention mask is 1"
 max_sequence_length: 2100
 overlength_rule: "reject"
+unknown_token_id: 0
+unknown_token_rule: "reject"
 dtype: "float32"
 device: "cpu"
 batch_size: 8
