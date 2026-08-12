@@ -643,8 +643,6 @@ def generate_research_report(
         },
     }
     write_json(target / "research_summary.json", summary)
-    if site_data_path is not None:
-        write_json(site_data_path, summary)
     (target / "research_report.md").write_text(_paper_markdown(summary), encoding="utf-8")
     (target / "plain_language_summary.md").write_text(
         _plain_language_summary(summary), encoding="utf-8"
@@ -666,7 +664,11 @@ def generate_research_report(
             "g4_prediction_lock_sha256": sha256_file(G4_PATH),
             "research_summary_sha256": sha256_file(target / "research_summary.json"),
             "research_report_sha256": sha256_file(target / "research_report.md"),
-            "site_data_sha256": sha256_file(site_data_path) if site_data_path is not None else None,
+            "site_data_sha256": (
+                sha256_file(target / "research_summary.json")
+                if site_data_path is not None
+                else None
+            ),
             "generated_files": {
                 str(path.relative_to(target)): sha256_file(path)
                 for path in sorted(target.iterdir())
@@ -676,4 +678,8 @@ def generate_research_report(
     )
     if site_public_directory is not None:
         _publish_site_bundle(target, Path(site_public_directory))
+    # Publish the website's completion marker last. Any companion-generation or
+    # download-bundle failure therefore leaves the checked-in pending state intact.
+    if site_data_path is not None:
+        write_json(site_data_path, summary)
     return summary
