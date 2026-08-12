@@ -10,7 +10,10 @@ from mammal_dili.curation.structures import create_review_packets, curate_cohort
 from mammal_dili.embeddings.mammal import (
     extract_embeddings,
     preflight_pilot,
+    prepare_full_blind_input,
     select_blind_pilot,
+    select_embedding_verification_sample,
+    validate_full_extraction,
     validate_pilot,
 )
 from mammal_dili.grouping.scaffolds import build_groups_and_folds
@@ -34,11 +37,14 @@ def parser() -> argparse.ArgumentParser:
     pilot_select = commands.add_parser("select-pilot")
     pilot_select.add_argument("--total", type=int, default=20)
     commands.add_parser("preflight-pilot")
+    commands.add_parser("prepare-mammal-input")
+    commands.add_parser("select-embedding-qc-sample")
     mammal = commands.add_parser("extract-mammal")
     mammal.add_argument("--input", required=True)
     mammal.add_argument("--output", required=True)
     mammal.add_argument("--reverse-order", action="store_true")
     commands.add_parser("validate-pilot")
+    commands.add_parser("validate-full-extraction")
     commands.add_parser("cross-validate")
     commands.add_parser("evaluate-update")
     commands.add_parser("estimate")
@@ -104,6 +110,17 @@ def main() -> None:
         print(json.dumps(report, indent=2))
         if not report["passed"]:
             raise SystemExit(2)
+    elif args.command == "prepare-mammal-input":
+        result = prepare_full_blind_input(
+            "data/processed/cohort_audit.csv", "data/processed/mammal_full_blind.csv"
+        )
+        print(f"Prepared {len(result)} label-blind full-cohort structures")
+    elif args.command == "select-embedding-qc-sample":
+        result = select_embedding_verification_sample(
+            "data/processed/mammal_full_blind.csv",
+            "data/processed/mammal_verification_sample.csv",
+        )
+        print(f"Selected {len(result)} deterministic verification structures")
     elif args.command == "extract-mammal":
         print(
             extract_embeddings(
@@ -120,6 +137,17 @@ def main() -> None:
             "artifacts/pilot/mammal_pilot_reordered.npz",
             "configs/mammal_embedding.yaml",
             "artifacts/pilot/pilot_report.json",
+        )
+        print(json.dumps(report, indent=2))
+        if not report["passed"]:
+            raise SystemExit(2)
+    elif args.command == "validate-full-extraction":
+        report = validate_full_extraction(
+            "data/processed/mammal_full_blind.csv",
+            "artifacts/features/mammal.npz",
+            "artifacts/features/mammal_verification_repeat.npz",
+            "configs/mammal_embedding.yaml",
+            "audit/qc/full_embedding_validation.json",
         )
         print(json.dumps(report, indent=2))
         if not report["passed"]:

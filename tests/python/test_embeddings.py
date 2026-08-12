@@ -1,6 +1,11 @@
 import numpy as np
+import pandas as pd
 
-from mammal_dili.embeddings.mammal import make_prompt, validate_pilot
+from mammal_dili.embeddings.mammal import (
+    make_prompt,
+    prepare_full_blind_input,
+    validate_pilot,
+)
 from mammal_dili.io import sha256_file, write_json
 
 
@@ -17,6 +22,27 @@ def test_prompt_contract_is_byte_explicit() -> None:
         "<MOLECULAR_ENTITY_SMALL_MOLECULE><SEQUENCE_NATURAL_START>"
         "CCO<SEQUENCE_NATURAL_END><EOS>"
     )
+
+
+def test_full_mammal_input_is_label_blind_and_eligible_only(tmp_path) -> None:
+    cohort = tmp_path / "cohort.csv"
+    output = tmp_path / "blind.csv"
+    pd.DataFrame(
+        {
+            "drug_id": ["eligible", "excluded"],
+            "standardised_isomeric_smiles": ["CCO", "CC"],
+            "eligibility": [True, False],
+            "outcome": [1, 0],
+            "dili_category": ["vMost", "vNo"],
+        }
+    ).to_csv(cohort, index=False)
+
+    result = prepare_full_blind_input(cohort, output)
+
+    assert result.to_dict(orient="records") == [
+        {"drug_id": "eligible", "standardised_isomeric_smiles": "CCO"}
+    ]
+    assert list(pd.read_csv(output)) == ["drug_id", "standardised_isomeric_smiles"]
 
 
 def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:

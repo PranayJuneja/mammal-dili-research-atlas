@@ -143,6 +143,38 @@ def select_blind_pilot(cohort_path: str | Path, output_path: str | Path, total: 
     return pilot
 
 
+def prepare_full_blind_input(
+    cohort_path: str | Path, output_path: str | Path
+) -> pd.DataFrame:
+    cohort = pd.read_csv(cohort_path)
+    frame = (
+        cohort[cohort["eligibility"]][["drug_id", "standardised_isomeric_smiles"]]
+        .sort_values("drug_id")
+        .reset_index(drop=True)
+    )
+    if frame["drug_id"].duplicated().any() or frame.isna().any().any():
+        raise AssertionError("Full label-blind input requires unique complete drug/SMILES rows")
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(target, index=False)
+    return frame
+
+
+def select_embedding_verification_sample(
+    input_path: str | Path,
+    output_path: str | Path,
+    fraction: float = 0.05,
+    seed: int = 78123,
+) -> pd.DataFrame:
+    frame = pd.read_csv(input_path)
+    size = max(1, int(np.ceil(len(frame) * fraction)))
+    sample = frame.sample(n=size, random_state=seed).sort_values("drug_id").reset_index(drop=True)
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    sample.to_csv(target, index=False)
+    return sample
+
+
 def _load_runtime(config: dict):
     import torch
     from huggingface_hub import snapshot_download
@@ -613,6 +645,94 @@ def validate_pilot(
             "distinct_process_ids": process_ids,
             "started_at_utc": [manifest["started_at_utc"] for manifest in manifests],
         },
+        "manifest_invariants_verified": invariant_fields,
+    }
+    write_json(report_path, report)
+    return report
+
+
+def validate_full_extraction(
+    input_path: str | Path,
+    full_path: str | Path,
+    repeat_sample_path: str | Path,
+    config_path: str | Path,
+    report_path: str | Path,
+) -> dict:
+    config = validate_config(config_path)
+    requested = pd.read_csv(input_path)["drug_id"].astype(str).tolist()
+    full, full_manifest = _load_and_validate_run(full_path, "input_order")
+    repeat, repeat_manifest = _load_and_validate_run(repeat_sample_path, "input_order")
+    full_ids = full["drug_ids"].astype(str).tolist()
+    repeat_ids = repeat["drug_ids"].astype(str).tolist()
+    if full_manifest["input_sha256"] != sha256_file(input_path):
+        raise AssertionError("Full extraction manifest input hash does not match frozen input")
+    if not set(repeat_ids).issubset(full_ids):
+        raise AssertionError("Verification sample contains IDs absent from full extraction")
+    if full_manifest["run_id"] == repeat_manifest["run_id"] or full_manifest["process_id"] == repeat_manifest["process_id"]:
+        raise AssertionError("Verification extraction is not from a distinct clean process")
+    invariant_fields = [
+        "config_file_sha256",
+        "validated_config_sha256",
+        "code_revision",
+        "implementation_revision",
+        "checkpoint",
+        "checkpoint_revision",
+        "model_files",
+        "tokenizer_files",
+        "prompt_prefix",
+        "prompt_suffix",
+        "hidden_state",
+        "pooling",
+        "dtype",
+        "device",
+        "batch_size",
+        "max_sequence_length",
+        "overlength_rule",
+        "unknown_token_id",
+        "unknown_token_rule",
+        "special_tokens",
+        "environment_locks",
+        "tokenizer_vocabulary_diagnostics",
+    ]
+    for field in invariant_fields:
+        if full_manifest[field] != repeat_manifest[field]:
+            raise AssertionError(f"Full and repeat manifests disagree on {field}")
+    full_map = dict(zip(full_ids, full["embeddings"], strict=True))
+    repeat_map = dict(zip(repeat_ids, repeat["embeddings"], strict=True))
+    differences = [
+        float(np.max(np.abs(full_map[drug_id] - repeat_map[drug_id])))
+        for drug_id in repeat_ids
+    ]
+    repeatable = all(
+        np.allclose(
+            full_map[drug_id],
+            repeat_map[drug_id],
+            atol=float(config["repeatability_atol"]),
+            rtol=float(config["repeatability_rtol"]),
+        )
+        for drug_id in repeat_ids
+    )
+    coverage = len(full_ids) / len(requested)
+    passed = (
+        set(full_ids).issubset(requested)
+        and coverage >= float(config["full_cohort_minimum_coverage"])
+        and repeatable
+        and len(repeat_ids) == len(set(repeat_ids))
+        and len(repeat_ids) == max(1, int(np.ceil(len(requested) * 0.05)))
+    )
+    report = {
+        "passed": passed,
+        "requested": len(requested),
+        "successful": len(full_ids),
+        "coverage": coverage,
+        "minimum_coverage": float(config["full_cohort_minimum_coverage"]),
+        "verification_sample_size": len(repeat_ids),
+        "verification_fraction_of_requested": len(repeat_ids) / len(requested),
+        "repeatable": repeatable,
+        "distinct_processes": True,
+        "maximum_absolute_difference": max(differences, default=None),
+        "full_output_sha256": sha256_file(full_path),
+        "repeat_output_sha256": sha256_file(repeat_sample_path),
         "manifest_invariants_verified": invariant_fields,
     }
     write_json(report_path, report)
