@@ -117,3 +117,59 @@ def estimate_results(predictions_path: str | Path, config_path: str | Path, outp
     repeat_frame.to_csv(target.with_name("repeat_metrics.csv"), index=False)
     np.save(target.with_name("bootstrap_delta_auroc.npy"), np.asarray(bootstrap, dtype=np.float64))
     return result
+
+
+def estimate_update_results(
+    predictions_path: str | Path, config_path: str | Path, output_path: str | Path
+) -> dict:
+    """Estimate untouched update-cohort performance with complete-scaffold uncertainty."""
+    config = validate_config(config_path)
+    predictions = pd.read_csv(predictions_path)
+    if set(predictions["release_group"]) != {"added-in-2.0"}:
+        raise AssertionError("External transport estimates require only added-in-2.0 rows")
+    models = {model: _metrics(frame) for model, frame in predictions.groupby("model")}
+    by_id = {
+        model: frame.set_index("drug_id") for model, frame in predictions.groupby("model")
+    }
+    if set(by_id["B"].index) != set(by_id["D"].index):
+        raise AssertionError("Update-cohort B and D predictions are not paired")
+    point = float(models["D"]["auroc"] - models["B"]["auroc"])
+    groups = predictions["scaffold_id"].unique()
+    rng = np.random.default_rng(int(config["bootstrap_seed"]) + 1)
+    bootstrap = []
+    paired = predictions[predictions["model"].isin(["B", "D"])]
+    for _ in range(int(config["bootstrap_resamples"])):
+        sampled = rng.choice(groups, size=len(groups), replace=True)
+        chunks = []
+        for draw, group in enumerate(sampled):
+            chunk = paired[paired["scaffold_id"] == group].copy()
+            chunk["bootstrap_group"] = draw
+            chunks.append(chunk)
+        sample = pd.concat(chunks, ignore_index=True)
+        if sample["outcome"].nunique() < 2:
+            continue
+        values = {
+            model: roc_auc_score(frame["outcome"], frame["predicted_probability"])
+            for model, frame in sample.groupby("model")
+        }
+        if set(values) == {"B", "D"}:
+            bootstrap.append(float(values["D"] - values["B"]))
+    lower, upper = np.percentile(bootstrap, [2.5, 97.5])
+    result = {
+        "design": "untouched DILIrank 2.0 added-drug transport cohort",
+        "drugs": int(predictions["drug_id"].nunique()),
+        "models": models,
+        "paired_delta_auroc": {
+            "estimate": point,
+            "ci95": [float(lower), float(upper)],
+            "bootstrap_successful_resamples": len(bootstrap),
+            "interpretation": "Exploratory transport evidence; it does not replace the primary result.",
+        },
+    }
+    target = Path(output_path)
+    write_json(target, result)
+    np.save(
+        target.with_name("update_bootstrap_delta_auroc.npy"),
+        np.asarray(bootstrap, dtype=np.float64),
+    )
+    return result

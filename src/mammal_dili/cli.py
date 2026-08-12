@@ -15,8 +15,8 @@ from mammal_dili.embeddings.mammal import (
 )
 from mammal_dili.grouping.scaffolds import build_groups_and_folds
 from mammal_dili.lock import create_protocol_lock
-from mammal_dili.modelling.nested_cv import run_nested_cv
-from mammal_dili.statistics.estimate import estimate_results
+from mammal_dili.modelling.nested_cv import run_nested_cv, run_update_transport
+from mammal_dili.statistics.estimate import estimate_results, estimate_update_results
 from mammal_dili.statistics.precision import simulate_precision
 
 
@@ -40,7 +40,9 @@ def parser() -> argparse.ArgumentParser:
     mammal.add_argument("--reverse-order", action="store_true")
     commands.add_parser("validate-pilot")
     commands.add_parser("cross-validate")
+    commands.add_parser("evaluate-update")
     commands.add_parser("estimate")
+    commands.add_parser("estimate-update")
     commands.add_parser("simulate-precision")
     return root
 
@@ -138,6 +140,23 @@ def main() -> None:
             "artifacts/results/results.json",
         )
         print(json.dumps(result["primary"], indent=2))
+    elif args.command == "evaluate-update":
+        result = run_update_transport(
+            "artifacts/folds/outer_folds.csv",
+            "artifacts/features/conventional.npz",
+            "artifacts/features/mammal.npz",
+            "artifacts/predictions/oof_predictions.csv",
+            "configs/analysis.yaml",
+            "artifacts/predictions/update_predictions.csv",
+        )
+        print(f"Generated {len(result)} untouched update-cohort predictions")
+    elif args.command == "estimate-update":
+        result = estimate_update_results(
+            "artifacts/predictions/update_predictions.csv",
+            "configs/analysis.yaml",
+            "artifacts/results/update_results.json",
+        )
+        print(json.dumps(result["paired_delta_auroc"], indent=2))
     elif args.command == "simulate-precision":
         print(json.dumps(simulate_precision("audit/qc/precision_simulation.csv"), indent=2))
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -266,6 +267,116 @@ def run_nested_cv(
             "conventional_features_sha256": sha256_file(conventional_path),
             "mammal_features_sha256": sha256_file(mammal_path),
             "prediction_sha256": sha256_file(target),
+            "protocol_lock_sha256": sha256_file("audit/protocol_lock/execution_lock.json"),
+            "protocol_config_bundle_sha256": protocol_lock["config_bundle_sha256"],
+        },
+    )
+    return result
+
+
+def run_update_transport(
+    folds_path: str | Path,
+    conventional_path: str | Path,
+    mammal_path: str | Path,
+    development_predictions_path: str | Path,
+    config_path: str | Path,
+    output_path: str | Path,
+) -> pd.DataFrame:
+    """Fit once on the original-list development cohort and evaluate the untouched update cohort."""
+    protocol_lock = require_protocol_lock()
+    config = validate_config(config_path)
+    seeds = validate_config("configs/seeds.yaml")
+    config = {**config, "classifier_seed": seeds["classifier"]}
+    frame = pd.read_csv(folds_path)
+    conventional_ids = set(np.load(conventional_path)["drug_ids"].astype(str))
+    mammal_ids = set(np.load(mammal_path)["drug_ids"].astype(str))
+    frame = frame[frame["drug_id"].astype(str).isin(conventional_ids & mammal_ids)].copy()
+    development, update = split_development_and_update(frame)
+    development = development.reset_index(drop=True)
+    update = update.reset_index(drop=True)
+    predictions = pd.read_csv(development_predictions_path)
+    if set(predictions["drug_id"].astype(str)) != set(development["drug_id"].astype(str)):
+        raise AssertionError("Development OOF predictions do not exactly match original-list cohort")
+    if set(predictions["release_group"]) != {"original-list"}:
+        raise AssertionError("Update-cohort rows leaked into development predictions")
+    tuning_path = Path(development_predictions_path).with_suffix(".tuning.json")
+    tuning = json.loads(tuning_path.read_text(encoding="utf-8"))
+    outputs = []
+    selected = {}
+    for model_name in ["A", "B", "C", "D"]:
+        model_tuning = [row for row in tuning if row["model"] == model_name]
+        counts = pd.Series([float(row["selected_c"]) for row in model_tuning]).value_counts()
+        most_frequent = counts[counts == counts.max()].index.astype(float).tolist()
+        selected_c = min(most_frequent)
+        selected[model_name] = {
+            "rule": "modal outer-fold selected C; ties choose smaller C (stronger regularisation)",
+            "C": selected_c,
+            "outer_selection_counts": {str(key): int(value) for key, value in counts.items()},
+        }
+        development_ids = development["drug_id"].astype(str).tolist()
+        update_ids = update["drug_id"].astype(str).tolist()
+        all_ids = development_ids + update_ids
+        feature_set = load_feature_set(model_name, all_ids, conventional_path, mammal_path)
+        development_indices = np.arange(len(development_ids))
+        update_indices = np.arange(len(development_ids), len(all_ids))
+        y_development = development["outcome"].astype(int).to_numpy()
+        pipeline = _pipeline(feature_set, selected_c, config)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ConvergenceWarning)
+            pipeline.fit(feature_set.values[development_indices], y_development)
+            convergence = sum(issubclass(item.category, ConvergenceWarning) for item in caught)
+        model_oof = predictions[predictions["model"] == model_name]
+        average_oof = (
+            model_oof.groupby("drug_id", as_index=False)["predicted_probability"].mean()
+        )
+        ordered_oof = development[["drug_id", "outcome"]].merge(
+            average_oof, on="drug_id", how="left", validate="one_to_one"
+        )
+        if ordered_oof["predicted_probability"].isna().any():
+            raise AssertionError("Development OOF probabilities are incomplete")
+        youden, sensitivity = _thresholds(
+            ordered_oof["outcome"].to_numpy(dtype=int),
+            ordered_oof["predicted_probability"].to_numpy(dtype=float),
+            float(config["sensitivity_target"]),
+        )
+        probabilities = pipeline.predict_proba(feature_set.values[update_indices])[:, 1]
+        for index, probability in enumerate(probabilities):
+            outputs.append(
+                {
+                    "drug_id": update.loc[index, "drug_id"],
+                    "compound_name_source": update.loc[index, "compound_name_source"],
+                    "dili_category": update.loc[index, "dili_category"],
+                    "outcome": int(update.loc[index, "outcome"]),
+                    "scaffold_id": update.loc[index, "scaffold_id"],
+                    "release_group": update.loc[index, "release_group"],
+                    "model": model_name,
+                    "predicted_probability": float(probability),
+                    "selected_c": selected_c,
+                    "youden_threshold": youden,
+                    "sensitivity_threshold": sensitivity,
+                    "convergence_warnings": convergence,
+                }
+            )
+    result = pd.DataFrame(outputs)
+    if len(result) != len(update) * 4:
+        raise AssertionError("Update prediction coverage is incomplete")
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    result.to_csv(target, index=False)
+    write_json(
+        target.with_suffix(".manifest.json"),
+        {
+            "design": "single untouched update-cohort transport after original-list development",
+            "development_drugs": len(development),
+            "update_drugs": len(update),
+            "prediction_rows": len(result),
+            "selected_hyperparameters": selected,
+            "development_predictions_sha256": sha256_file(development_predictions_path),
+            "development_tuning_sha256": sha256_file(tuning_path),
+            "folds_sha256": sha256_file(folds_path),
+            "conventional_features_sha256": sha256_file(conventional_path),
+            "mammal_features_sha256": sha256_file(mammal_path),
+            "output_sha256": sha256_file(target),
             "protocol_lock_sha256": sha256_file("audit/protocol_lock/execution_lock.json"),
             "protocol_config_bundle_sha256": protocol_lock["config_bundle_sha256"],
         },
