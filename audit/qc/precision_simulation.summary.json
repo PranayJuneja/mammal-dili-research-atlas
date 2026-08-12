@@ -1,8 +1,17 @@
 {
   "status": "COMPLETED_BEFORE_MODEL_PERFORMANCE_INSPECTION",
   "seed": 120930,
+  "folds_sha256": "a9db5aee7ce0280529db8a5d8b41d6bfa357f9ea609703fa4c81cda4d81e602b",
+  "observed_rows": 810,
+  "observed_groups": 569,
+  "observed_largest_group": 74,
+  "repeated_cv_prediction_sets": 5,
   "scenarios": 16,
-  "minimum_empirical_coverage": 0.82,
-  "maximum_mean_ci_width": 0.07378498999849997,
-  "note": "Planning simulation only. It did not use empirical model predictions and did not alter the locked five-repeat, five-fold, 2,000-resample analysis."
+  "coverage_experiments_per_scenario": 40,
+  "coverage_bootstrap_resamples": 100,
+  "locked_full_bootstrap_resamples": 2000,
+  "minimum_empirical_coverage": 0.875,
+  "maximum_mean_ci_width": 0.04533739678502962,
+  "maximum_endpoint_shift_100_to_2000": 0.005014087715616013,
+  "note": "Planning simulation only. It uses the observed group-size distribution and five paired prediction repeats but no empirical model predictions. Coverage screening uses 100 resamples across 40 experiments; every scenario also receives the locked 2,000-resample bootstrap to assess Monte Carlo endpoint stability. No analysis setting was changed."
 }

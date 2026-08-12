@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from mammal_dili.config import validate_config
+from mammal_dili.curation.structures import adjudicate_structure
 from mammal_dili.embeddings.mammal import select_blind_pilot
 from mammal_dili.lock import require_protocol_lock
 
@@ -43,6 +44,27 @@ def test_disputed_salt_products_have_explicit_active_moiety_overrides() -> None:
     assert overrides["LT01713"]["formula"] == "C11H14N2S"
     for drug_id in ("LT00099", "LT00258", "LT00519", "LT00684", "LT01141", "LT01928"):
         assert drug_id in overrides
+
+
+def test_covalent_ester_is_not_removed_by_suffix_fallback() -> None:
+    config = validate_config("configs/curation.yaml")
+    row = {
+        "original_smiles": "CCOC(=O)C",
+        "active_moiety_smiles": "CC(=O)O",
+    }
+    result = adjudicate_structure(row, config)
+    assert result["curated_formula"] == "C4H8O2"
+    assert result["curation_flags"] == "EXACT_PRODUCT_PARENT_RETAINED_NON_EQUIVALENT_SUFFIX_FALLBACK"
+
+
+def test_equivalent_disconnected_salt_fallback_is_accepted() -> None:
+    config = validate_config("configs/curation.yaml")
+    row = {
+        "original_smiles": "CC(=O)[O-].[Na+]",
+        "active_moiety_smiles": "CC(=O)O",
+    }
+    result = adjudicate_structure(row, config)
+    assert result["curation_flags"] == "PUBCHEM_ACTIVE_MOIETY_EQUIVALENCE_CONFIRMED"
 
 
 def test_complete_group_resample_never_splits_a_group() -> None:

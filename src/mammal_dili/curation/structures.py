@@ -92,6 +92,30 @@ def _resolve_duplicates(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
+def adjudicate_structure(row: dict, config: dict) -> dict:
+    """Use a suffix fallback only when it is structurally equivalent to the exact product parent."""
+    exact = curate_smiles(row.get("original_smiles"), config)
+    active_smiles = row.get("active_moiety_smiles")
+    has_active = isinstance(active_smiles, str) and bool(active_smiles.strip())
+    if not has_active:
+        return exact
+    active = curate_smiles(active_smiles, config)
+    equivalent = (
+        exact.get("eligibility") is True
+        and active.get("eligibility") is True
+        and exact.get("parent_inchikey") == active.get("parent_inchikey")
+    )
+    if equivalent:
+        active["curation_flags"] = "PUBCHEM_ACTIVE_MOIETY_EQUIVALENCE_CONFIRMED"
+        return active
+    exact["curation_flags"] = (
+        "EXACT_PRODUCT_PARENT_RETAINED_NON_EQUIVALENT_SUFFIX_FALLBACK"
+        if exact.get("eligibility")
+        else exact.get("curation_flags", "")
+    )
+    return exact
+
+
 def curate_cohort(input_path: str | Path, config_path: str | Path, output_path: str | Path) -> pd.DataFrame:
     config = validate_config(config_path)
     frame = pd.read_csv(input_path)
@@ -125,7 +149,7 @@ def curate_cohort(input_path: str | Path, config_path: str | Path, output_path: 
             elif any(
                 token in name
                 for token in (
-                    "alfa", "interferon", "toxin", "ase", "mab", "filgrastim", "somatropin",
+                    "interferon", "toxin", "filgrastim", "somatropin",
                     "pancrelipase", "urokinase", "pegcetacoplan", "defibrotide", "protein",
                     "secretin", "dermatan", "protamine", "enoxaparin", "dalteparin", "porfimer",
                     "glatiramer", "sargramostim", "oprelvekin", "etanercept", "anakinra",
@@ -147,14 +171,16 @@ def curate_cohort(input_path: str | Path, config_path: str | Path, output_path: 
                 code = "IDENTITY_UNRESOLVED"
             decisions.append({"eligibility": False, "exclusion_code": code})
         else:
-            active_smiles = row.get("active_moiety_smiles")
-            has_active_smiles = isinstance(active_smiles, str) and bool(active_smiles.strip())
-            chosen_smiles = active_smiles if has_active_smiles else row.get("original_smiles")
-            decision = curate_smiles(chosen_smiles, config)
-            if has_active_smiles:
-                decision["curation_flags"] = "PUBCHEM_ACTIVE_MOIETY_SUFFIX_ADJUDICATION"
-            decisions.append(decision)
-    curated = pd.concat([frame.reset_index(drop=True), pd.DataFrame(decisions)], axis=1)
+            decisions.append(adjudicate_structure(row, config))
+    decision_frame = pd.DataFrame(decisions)
+    curated = frame.reset_index(drop=True).copy()
+    for column in decision_frame.columns:
+        if column in curated.columns:
+            curated[column] = decision_frame[column].combine_first(curated[column])
+        else:
+            curated[column] = decision_frame[column]
+    if not curated.columns.is_unique:
+        raise AssertionError("Curated cohort output contains duplicate columns")
     curated = _resolve_duplicates(curated)
     curated["drug_id"] = curated["dilirank_id"]
     curated["review_status"] = "rules-applied-pending-independent-review"
@@ -197,6 +223,13 @@ def create_review_packets(
         "source_molecular_weight",
         "pubchem_candidate_count",
         "identity_adjudication",
+        "active_moiety_query",
+        "active_moiety_cid",
+        "active_moiety_title",
+        "active_moiety_smiles",
+        "active_moiety_inchikey",
+        "active_moiety_formula",
+        "active_moiety_adjudication",
         "original_smiles",
         "standardised_isomeric_smiles",
         "parent_inchikey",

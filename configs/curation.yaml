@@ -51,6 +51,10 @@ manual_exclusions:
   LT00545: "MIXTURE_OR_COMBINATION: dimenhydrinate is a two-active-component complex"
   LT01306: "BIOLOGIC_OR_MACROMOLECULE: interferon alfa-2b is a biologic"
   LT00568: "MIXTURE_OR_COMBINATION: ivermectin is a multi-component avermectin mixture"
+  LT00358: "POLYMER_OR_UNRESOLVED_INORGANIC: sucralfate is a complex aluminium sucrose sulfate without one small-molecule parent"
+  LT01276: "BIOLOGIC_OR_MACROMOLECULE: benzylpenicilloyl polylysine is a macromolecular polylysine conjugate"
+  LT01291: "BIOLOGIC_OR_MACROMOLECULE: polymyxin B sulfate is a cyclic peptide mixture"
+  LT02056: "POLYMER_OR_UNRESOLVED_INORGANIC: dextromethorphan polistirex is an ion-exchange resin complex, excluded consistently with phentermine resin"
   LT00881: "POLYMER_OR_UNRESOLVED_INORGANIC: colestipol is a cross-linked polymer not represented by one small fragment"
   LT01858: "MIXTURE_OR_COMBINATION: tetrabamate is a multi-component carbamate combination"
 manual_parent_overrides:
@@ -72,6 +76,12 @@ manual_parent_overrides:
     formula: "C11H9I3N2O4"
     isomeric_smiles: "CC(=O)NC1=C(C(=C(C(=C1I)C(=O)O)I)C(=O)NC)I"
     justification: "Meglumine is the counterion; PubChem CID 3737 is iothalamic acid."
+  LT00330:
+    name: "Lactic acid"
+    pubchem_cid: 612
+    formula: "C3H6O3"
+    isomeric_smiles: "CC(O)C(=O)O"
+    justification: "Sodium is the counterion; PubChem CID 612 is lactic acid, the neutral lactate parent."
   LT00258:
     name: "Atorvastatin"
     pubchem_cid: 60823
