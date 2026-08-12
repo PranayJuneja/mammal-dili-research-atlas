@@ -19,7 +19,9 @@ Route: `/`
 
 The mobile research-phase rail is intentionally horizontally scrollable. No other
 content crossed the viewport boundary. The primary benchmark labels remained inside
-their card at the narrow viewport.
+their card at the narrow viewport. The final exact-width rerun measured document and
+body scroll widths of 407 px at a 407 px client width; the rail remained internally
+scrollable at 1,348 px and its own bounds stayed at 0–407 px.
 
 ## Interaction checks
 

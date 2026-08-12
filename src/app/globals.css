@@ -1088,6 +1088,7 @@ a {
 
 @media (max-width: 520px) {
   :root { --shell: calc(100% - 28px); }
+  .spine-track { margin-inline: -14px; padding-inline: 14px; }
   .status-line { align-items: flex-start; border-radius: 14px; line-height: 1.4; }
   .hero-actions .button { width: 100%; }
   .molecule-field { min-height: 310px; }
