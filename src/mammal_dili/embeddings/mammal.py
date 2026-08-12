@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 import logging
 import platform
 import subprocess
@@ -60,6 +61,49 @@ def _construct_tokenizer(snapshot: Path):
     stream_messages = [line.strip() for line in stream.getvalue().splitlines() if line.strip()]
     messages = sorted(set(warning_messages + captured_logs + stream_messages))
     return tokenizer, messages
+
+
+def _compress_integer_ranges(values: list[int]) -> list[list[int]]:
+    if not values:
+        return []
+    ranges: list[list[int]] = []
+    start = previous = values[0]
+    for value in values[1:]:
+        if value == previous + 1:
+            previous = value
+            continue
+        ranges.append([start, previous])
+        start = previous = value
+    ranges.append([start, previous])
+    return ranges
+
+
+def _tokenizer_vocabulary_diagnostics(tokenizer_root: Path) -> list[dict]:
+    """Record the non-contiguous ID condition reported by the native tokenizer loader."""
+    diagnostics = []
+    for path in sorted(tokenizer_root.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        vocab = payload.get("model", {}).get("vocab", {})
+        if not isinstance(vocab, dict) or not vocab:
+            continue
+        ids = sorted({int(value) for value in vocab.values()})
+        holes = sorted(set(range(ids[0], ids[-1] + 1)) - set(ids))
+        diagnostics.append(
+            {
+                "file": path.name,
+                "model_type": payload.get("model", {}).get("type"),
+                "vocab_entries": len(ids),
+                "minimum_id": ids[0],
+                "maximum_id": ids[-1],
+                "hole_count": len(holes),
+                "hole_ranges": _compress_integer_ranges(holes),
+                "interpretation": (
+                    "Non-contiguous reserved ID ranges; observed native loader emits "
+                    "OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+                ),
+            }
+        )
+    return diagnostics
 
 
 def select_blind_pilot(cohort_path: str | Path, output_path: str | Path, total: int = 20) -> pd.DataFrame:
@@ -136,6 +180,7 @@ def preflight_pilot(
         )
     )
     tokenizer, tokenizer_loader_warnings = _construct_tokenizer(snapshot)
+    tokenizer_vocabulary_diagnostics = _tokenizer_vocabulary_diagnostics(snapshot / "tokenizer")
     diagnostics: list[dict] = []
     for row in frame.to_dict(orient="records"):
         smiles = row["standardised_isomeric_smiles"]
@@ -181,6 +226,7 @@ def preflight_pilot(
         "max_sequence_length": config["max_sequence_length"],
         "unknown_token_rule": config["unknown_token_rule"],
         "tokenizer_loader_warnings": tokenizer_loader_warnings,
+        "tokenizer_vocabulary_diagnostics": tokenizer_vocabulary_diagnostics,
         "diagnostics": diagnostics,
     }
     write_json(report_path, report)
@@ -209,6 +255,7 @@ def extract_embeddings(
     process_id = __import__("os").getpid()
     started_at_utc = datetime.now(UTC).isoformat()
     torch, model, tokenizer, snapshot, tokenizer_loader_warnings = _load_runtime(config)
+    tokenizer_vocabulary_diagnostics = _tokenizer_vocabulary_diagnostics(snapshot / "tokenizer")
     embeddings: list[np.ndarray] = []
     token_counts: list[int] = []
     failures: list[dict] = []
@@ -347,6 +394,11 @@ def extract_embeddings(
                 for path in tokenizer_files
             },
             "tokenizer_loader_warnings": tokenizer_loader_warnings,
+            "tokenizer_vocabulary_diagnostics": tokenizer_vocabulary_diagnostics,
+            "tokenizer_native_warning_disposition": (
+                "Known non-contiguous reserved vocabulary IDs independently diagnosed from "
+                "the pinned JSON files; tokenizer bytes and ID assignments are unchanged."
+            ),
             "tokenizer_revision": config["checkpoint_revision"],
             "code_revision": config["code_revision"],
             "implementation_revision": implementation_revision,
@@ -428,8 +480,6 @@ def _compare_embedding_runs(reference, candidate, config: dict) -> dict:
 
 
 def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[object, dict]:
-    import json
-
     target = Path(path)
     manifest_path = target.with_suffix(".manifest.json")
     if not manifest_path.exists():
@@ -437,6 +487,7 @@ def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[objec
     run = np.load(target)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     ids = run["drug_ids"].astype(str).tolist()
+    token_counts = run["token_counts"].tolist()
     embeddings = run["embeddings"]
     if manifest["batch_order"] != expected_order:
         raise AssertionError(f"Expected {expected_order}, found {manifest['batch_order']}")
@@ -450,10 +501,30 @@ def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[objec
         raise AssertionError("Manifest requested row count does not match requested IDs")
     if manifest["rows_successful"] + len(failures) != manifest["rows_requested"]:
         raise AssertionError("Manifest successes and failures do not reconcile")
+    if len(requested_ids) != len(set(requested_ids)):
+        raise AssertionError("Requested drug IDs are not unique")
+    failure_ids = [str(failure.get("drug_id")) for failure in failures]
+    if len(failure_ids) != len(set(failure_ids)):
+        raise AssertionError("A requested drug has multiple failure records")
+    if set(ids) & set(failure_ids):
+        raise AssertionError("A drug is recorded as both successful and failed")
+    if set(ids) | set(failure_ids) != set(requested_ids):
+        raise AssertionError("Successful and failed IDs do not partition requested IDs")
     if "tokenizer/config.yaml" not in manifest["tokenizer_files"]:
         raise AssertionError("Tokenizer manifest omits tokenizer/config.yaml")
-    if "tokenizer_loader_warnings" not in manifest:
-        raise AssertionError("Tokenizer construction warnings were not captured")
+    if not manifest.get("tokenizer_vocabulary_diagnostics"):
+        raise AssertionError("Tokenizer vocabulary-hole diagnostics were not recorded")
+    diagnostics = manifest["token_diagnostics"]
+    diagnostic_ids = [str(item["drug_id"]) for item in diagnostics]
+    if diagnostic_ids != ids or len(token_counts) != len(ids):
+        raise AssertionError("Token counts/diagnostics do not align with successful NPZ IDs")
+    for item, token_count in zip(diagnostics, token_counts, strict=True):
+        if item["token_count"] != token_count:
+            raise AssertionError("NPZ token count disagrees with manifest diagnostic")
+        if item["unknown_token_count"] != 0 or item["truncated"]:
+            raise AssertionError("A successful row has unknown tokens or truncation")
+        if any("unknown token" in warning.casefold() for warning in item["warnings"]):
+            raise AssertionError("A successful row has an unknown-token warning")
     if embeddings.ndim != 2 or embeddings.shape[1] != 768:
         raise AssertionError("Expected 768-dimensional MAMMAL vectors")
     if manifest["embedding_dimension"] != embeddings.shape[1]:
@@ -501,6 +572,11 @@ def validate_pilot(
         "batch_size",
         "max_sequence_length",
         "unknown_token_rule",
+        "unknown_token_id",
+        "overlength_rule",
+        "special_tokens",
+        "environment_locks",
+        "tokenizer_vocabulary_diagnostics",
     ]
     for field in invariant_fields:
         if any(manifest[field] != manifests[0][field] for manifest in manifests[1:]):
@@ -509,6 +585,9 @@ def validate_pilot(
     process_ids = [manifest["process_id"] for manifest in manifests]
     if len(set(run_ids)) != 3 or len(set(process_ids)) != 3:
         raise AssertionError("Pilot outputs are not from three distinct fresh processes")
+    timestamps = [datetime.fromisoformat(manifest["started_at_utc"]) for manifest in manifests]
+    if any(value.tzinfo is None for value in timestamps) or len(set(timestamps)) != 3:
+        raise AssertionError("Pilot start timestamps are not distinct timezone-aware values")
     process_repeatability = _compare_embedding_runs(baseline, same_order, config)
     batch_order_invariance = _compare_embedding_runs(baseline, reordered, config)
     required = int(config["pilot_required_successes"])

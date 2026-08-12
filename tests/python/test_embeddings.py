@@ -26,10 +26,14 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
     baseline = tmp_path / "baseline.npz"
     same = tmp_path / "same.npz"
     reversed_run = tmp_path / "reversed.npz"
-    np.savez_compressed(baseline, drug_ids=ids, embeddings=vectors)
-    np.savez_compressed(same, drug_ids=ids, embeddings=vectors.copy())
+    token_counts = np.full(20, 6, dtype=np.int32)
+    np.savez_compressed(baseline, drug_ids=ids, embeddings=vectors, token_counts=token_counts)
+    np.savez_compressed(same, drug_ids=ids, embeddings=vectors.copy(), token_counts=token_counts)
     np.savez_compressed(
-        reversed_run, drug_ids=ids[::-1], embeddings=vectors[::-1].copy()
+        reversed_run,
+        drug_ids=ids[::-1],
+        embeddings=vectors[::-1].copy(),
+        token_counts=token_counts[::-1],
     )
     invariant = {
         "input_sha256": "input",
@@ -50,6 +54,11 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
         "batch_size": 8,
         "max_sequence_length": 2100,
         "unknown_token_rule": "reject",
+        "unknown_token_id": 0,
+        "overlength_rule": "reject",
+        "special_tokens": "included",
+        "environment_locks": {"environment/mammal-lock.txt": "lock"},
+        "tokenizer_vocabulary_diagnostics": [{"file": "tokenizer.json", "hole_count": 1}],
     }
     for index, (path, order, run_ids) in enumerate(
         [
@@ -73,6 +82,16 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
                 "successful_drug_ids": run_ids.tolist(),
                 "failures": [],
                 "tokenizer_loader_warnings": [],
+                "token_diagnostics": [
+                    {
+                        "drug_id": drug_id,
+                        "token_count": 6,
+                        "unknown_token_count": 0,
+                        "truncated": False,
+                        "warnings": [],
+                    }
+                    for drug_id in run_ids
+                ],
                 "embedding_dimension": 768,
                 "embedding_norm_min": float(
                     np.linalg.norm(vectors if order == "input_order" else vectors[::-1], axis=1).min()

@@ -9,6 +9,68 @@
   "max_sequence_length": 2100,
   "unknown_token_rule": "reject",
   "tokenizer_loader_warnings": [],
+  "tokenizer_vocabulary_diagnostics": [
+    {
+      "file": "bpe_tokenizer_trained_on_chembl_zinc_with_aug_4272372_samples_balanced_1_1.json",
+      "model_type": "BPE",
+      "vocab_entries": 3309,
+      "minimum_id": 0,
+      "maximum_id": 3521,
+      "hole_count": 213,
+      "hole_ranges": [
+        [
+          314,
+          526
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    },
+    {
+      "file": "cell_attributes_tokenizer.json",
+      "model_type": "WordLevel",
+      "vocab_entries": 1103,
+      "minimum_id": 0,
+      "maximum_id": 4310,
+      "hole_count": 3208,
+      "hole_ranges": [
+        [
+          314,
+          3521
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    },
+    {
+      "file": "gene_tokenizer.json",
+      "model_type": "WordLevel",
+      "vocab_entries": 95218,
+      "minimum_id": 0,
+      "maximum_id": 99903,
+      "hole_count": 4686,
+      "hole_ranges": [
+        [
+          314,
+          4999
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    },
+    {
+      "file": "t5_tokenizer_AA_special.json",
+      "model_type": "WordLevel",
+      "vocab_entries": 340,
+      "minimum_id": 0,
+      "maximum_id": 526,
+      "hole_count": 187,
+      "hole_ranges": [
+        [
+          314,
+          500
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    }
+  ],
   "diagnostics": [
     {
       "drug_id": "PILOT-01",
