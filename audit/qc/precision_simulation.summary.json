@@ -1,0 +1,8 @@
+{
+  "status": "COMPLETED_BEFORE_MODEL_PERFORMANCE_INSPECTION",
+  "seed": 120930,
+  "scenarios": 16,
+  "minimum_empirical_coverage": 0.82,
+  "maximum_mean_ci_width": 0.07378498999849997,
+  "note": "Planning simulation only. It did not use empirical model predictions and did not alter the locked five-repeat, five-fold, 2,000-resample analysis."
+}

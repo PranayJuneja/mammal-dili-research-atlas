@@ -16,7 +16,9 @@ from mammal_dili.io import write_json
 SALT_SUFFIXES = re.compile(
     r"\s+(hydrochloride|hydrobromide|sodium|potassium|calcium|magnesium|mesylate|maleate|"
     r"fumarate|tartrate|citrate|phosphate|sulfate|succinate|acetate|lactate|nitrate|besylate|"
-    r"tosylate|isethionate|gluconate|palmitate|valerate|estolate|complex)$",
+    r"tosylate|ditosylate|isethionate|gluconate|palmitate|valerate|estolate|pamoate|"
+    r"tromethamine|meglumine|dimeglumine|olamine|hemifumarate|polistirex|monohydrate|"
+    r"dimethyl sulfoxide|sodium glycinate|complex)$",
     re.IGNORECASE,
 )
 
@@ -86,10 +88,12 @@ def resolve_pubchem(
 
     def resolve_one(source: dict) -> tuple[dict, dict[str, dict | None]]:
         resolved = None
+        active_moiety = None
         query_used = source["compound_name_source"]
         method = "unresolved"
         additions: dict[str, dict | None] = {}
         with requests.Session() as session:
+            candidate_results = []
             for query, candidate_method in candidate_names(source["compound_name_source"]):
                 cache_key = query.casefold()
                 value = cache.get(cache_key)
@@ -102,11 +106,19 @@ def resolve_pubchem(
                     int(source_config["retries"]),
                 )
                     additions[cache_key] = value
-                if value:
-                    resolved = value
-                    query_used = query
-                    method = candidate_method
-                    break
+                candidate_results.append((query, candidate_method, value))
+            exact = candidate_results[0][2]
+            fallback = candidate_results[1][2] if len(candidate_results) > 1 else None
+            if exact:
+                resolved = exact
+                query_used = candidate_results[0][0]
+                method = "exact-name"
+                active_moiety = fallback
+            elif fallback:
+                resolved = fallback
+                active_moiety = fallback
+                query_used = candidate_results[1][0]
+                method = "salt-suffix-fallback"
             result = dict(source)
             result.update(
                 {
@@ -138,6 +150,23 @@ def resolve_pubchem(
                         else None
                     ),
                     "identity_adjudication": resolved.get("_adjudication") if resolved else None,
+                    "active_moiety_query": candidate_results[1][0] if active_moiety and len(candidate_results) > 1 else None,
+                    "active_moiety_cid": active_moiety.get("CID") if active_moiety else None,
+                    "active_moiety_title": active_moiety.get("Title") if active_moiety else None,
+                    "active_moiety_smiles": (
+                        active_moiety.get("SMILES")
+                        or active_moiety.get("IsomericSMILES")
+                        or active_moiety.get("ConnectivitySMILES")
+                    )
+                    if active_moiety
+                    else None,
+                    "active_moiety_inchikey": active_moiety.get("InChIKey") if active_moiety else None,
+                    "active_moiety_formula": active_moiety.get("MolecularFormula") if active_moiety else None,
+                    "active_moiety_adjudication": (
+                        "compound-name-suffix-resolved-to-unique-or-exact-PubChem-active"
+                        if active_moiety
+                        else None
+                    ),
                 }
             )
         return result, additions

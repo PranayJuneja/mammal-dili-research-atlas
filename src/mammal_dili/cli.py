@@ -12,6 +12,7 @@ from mammal_dili.grouping.scaffolds import build_groups_and_folds
 from mammal_dili.lock import create_protocol_lock
 from mammal_dili.modelling.nested_cv import run_nested_cv
 from mammal_dili.statistics.estimate import estimate_results
+from mammal_dili.statistics.precision import simulate_precision
 
 
 def parser() -> argparse.ArgumentParser:
@@ -34,6 +35,7 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("validate-pilot")
     commands.add_parser("cross-validate")
     commands.add_parser("estimate")
+    commands.add_parser("simulate-precision")
     return root
 
 
@@ -47,7 +49,7 @@ def main() -> None:
             "data/interim/dilirank.csv",
             "configs/sources.yaml",
             "data/interim/identity_resolution.csv",
-            "data/interim/pubchem_cache_v2.json",
+            "data/interim/pubchem_cache_v3.json",
         )
         print(result["identity_status"].value_counts().to_string())
     elif args.command == "curate":
@@ -120,6 +122,8 @@ def main() -> None:
             "artifacts/results/results.json",
         )
         print(json.dumps(result["primary"], indent=2))
+    elif args.command == "simulate-precision":
+        print(json.dumps(simulate_precision("audit/qc/precision_simulation.csv"), indent=2))
 
 
 if __name__ == "__main__":

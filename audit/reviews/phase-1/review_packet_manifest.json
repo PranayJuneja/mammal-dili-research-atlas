@@ -1,8 +1,8 @@
 {
   "status": "AWAITING_INDEPENDENT_VALIDATOR_REVIEW",
-  "all_exclusions_rows": 162,
-  "routine_inclusion_population": 820,
-  "routine_inclusion_sample_rows": 82,
+  "all_exclusions_rows": 173,
+  "routine_inclusion_population": 809,
+  "routine_inclusion_sample_rows": 81,
   "routine_inclusion_fraction": 0.1,
   "sampling_seed": 120812,
   "review_instructions": "Confirm identity, active-moiety choice, eligibility and exclusion code for every exclusion; apply the same checks to every routine inclusion sample row. Record disagreements explicitly."

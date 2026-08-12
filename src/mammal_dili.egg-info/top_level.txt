@@ -1,5 +1,0 @@
-app
-components
-data
-lib
-mammal_dili

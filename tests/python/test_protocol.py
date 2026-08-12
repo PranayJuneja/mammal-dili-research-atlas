@@ -35,6 +35,16 @@ def test_frozen_pilot_is_label_blind_and_covers_technical_extremes(tmp_path) -> 
     assert not any("dili" in column.casefold() or "outcome" in column.casefold() for column in frame)
 
 
+def test_disputed_salt_products_have_explicit_active_moiety_overrides() -> None:
+    config = validate_config("configs/curation.yaml")
+    overrides = config["manual_parent_overrides"]
+    assert overrides["LT01398"]["formula"] == "C3H7O4P"
+    assert overrides["LT00257"]["formula"] == "C11H9I3N2O4"
+    assert overrides["LT01713"]["formula"] == "C11H14N2S"
+    for drug_id in ("LT00099", "LT00258", "LT00519", "LT00684", "LT01141", "LT01928"):
+        assert drug_id in overrides
+
+
 def test_complete_group_resample_never_splits_a_group() -> None:
     groups = np.array(["a", "a", "b", "c", "c"])
     rng = np.random.default_rng(7)

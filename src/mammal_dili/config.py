@@ -35,6 +35,14 @@ class SourcesConfig(StrictModel):
     pubchem: PubChemSource
 
 
+class ParentOverride(StrictModel):
+    name: str
+    pubchem_cid: int
+    formula: str
+    isomeric_smiles: str
+    justification: str
+
+
 class CurationConfig(StrictModel):
     schema_version: Literal[1]
     outcome_include: list[str]
@@ -51,6 +59,7 @@ class CurationConfig(StrictModel):
     review_fraction: float
     exclusion_codes: list[str]
     manual_exclusions: dict[str, str]
+    manual_parent_overrides: dict[str, ParentOverride]
 
 
 class MammalConfig(StrictModel):

@@ -98,6 +98,7 @@ def curate_cohort(input_path: str | Path, config_path: str | Path, output_path: 
     decisions = []
     for row in frame.to_dict(orient="records"):
         manual_reason = config["manual_exclusions"].get(row["dilirank_id"])
+        manual_parent = config["manual_parent_overrides"].get(row["dilirank_id"])
         if manual_reason:
             decisions.append(
                 {
@@ -106,10 +107,53 @@ def curate_cohort(input_path: str | Path, config_path: str | Path, output_path: 
                     "curation_flags": f"MANUAL_REVIEW:{manual_reason}",
                 }
             )
+        elif manual_parent:
+            decision = curate_smiles(manual_parent["isomeric_smiles"], config)
+            decision.update(
+                {
+                    "curation_flags": "MANUAL_ACTIVE_MOIETY_OVERRIDE",
+                    "active_moiety_cid": manual_parent["pubchem_cid"],
+                    "active_moiety_formula": manual_parent["formula"],
+                    "active_moiety_adjudication": manual_parent["justification"],
+                }
+            )
+            decisions.append(decision)
         elif row.get("identity_status") != "resolved":
-            decisions.append({"eligibility": False, "exclusion_code": "IDENTITY_UNRESOLVED"})
+            name = str(row.get("compound_name_source", "")).casefold()
+            if any(token in name for token in ("ivermectin", "simethicone-cellulose")):
+                code = "MIXTURE_OR_COMBINATION"
+            elif any(
+                token in name
+                for token in (
+                    "alfa", "interferon", "toxin", "ase", "mab", "filgrastim", "somatropin",
+                    "pancrelipase", "urokinase", "pegcetacoplan", "defibrotide", "protein",
+                    "secretin", "dermatan", "protamine", "enoxaparin", "dalteparin", "porfimer",
+                    "glatiramer", "sargramostim", "oprelvekin", "etanercept", "anakinra",
+                    "palifermin", "abatacept", "rilonacept", "romiplostim", "casimersen",
+                    "eteplirsen", "givosiran", "golodirsen", "inclisiran", "lumasiran",
+                    "nusinersen", "patisiran", "viltolarsen",
+                )
+            ):
+                code = "BIOLOGIC_OR_MACROMOLECULE"
+            elif any(
+                token in name
+                for token in (
+                    "poly", "ferumox", "sevelamer", "hetastarch", "technetium", "radium",
+                    "patiromer", "sucralfate",
+                )
+            ):
+                code = "POLYMER_OR_UNRESOLVED_INORGANIC"
+            else:
+                code = "IDENTITY_UNRESOLVED"
+            decisions.append({"eligibility": False, "exclusion_code": code})
         else:
-            decisions.append(curate_smiles(row.get("original_smiles"), config))
+            active_smiles = row.get("active_moiety_smiles")
+            has_active_smiles = isinstance(active_smiles, str) and bool(active_smiles.strip())
+            chosen_smiles = active_smiles if has_active_smiles else row.get("original_smiles")
+            decision = curate_smiles(chosen_smiles, config)
+            if has_active_smiles:
+                decision["curation_flags"] = "PUBCHEM_ACTIVE_MOIETY_SUFFIX_ADJUDICATION"
+            decisions.append(decision)
     curated = pd.concat([frame.reset_index(drop=True), pd.DataFrame(decisions)], axis=1)
     curated = _resolve_duplicates(curated)
     curated["drug_id"] = curated["dilirank_id"]
