@@ -1,5 +1,8 @@
 {
-  "status": "AWAITING_INDEPENDENT_VALIDATOR_REVIEW",
+  "status": "INDEPENDENT_VALIDATOR_ACCEPTED",
+  "accepted_at": "2026-08-13T00:59:00+05:30",
+  "validator": "Fermat (/root/validator)",
+  "validated_commit": "1b1cee4",
   "all_exclusions_rows": 173,
   "routine_inclusion_population": 809,
   "routine_inclusion_sample_rows": 81,
