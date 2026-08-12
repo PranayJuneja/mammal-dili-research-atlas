@@ -46,6 +46,13 @@ def test_disputed_salt_products_have_explicit_active_moiety_overrides() -> None:
         assert drug_id in overrides
 
 
+def test_erythropoietin_aliases_are_both_excluded_as_biologics() -> None:
+    config = validate_config("configs/curation.yaml")
+    exclusions = config["manual_exclusions"]
+    assert exclusions["LT01316"].startswith("BIOLOGIC_OR_MACROMOLECULE")
+    assert exclusions["LT02330"].startswith("BIOLOGIC_OR_MACROMOLECULE")
+
+
 def test_covalent_ester_is_not_removed_by_suffix_fallback() -> None:
     config = validate_config("configs/curation.yaml")
     row = {

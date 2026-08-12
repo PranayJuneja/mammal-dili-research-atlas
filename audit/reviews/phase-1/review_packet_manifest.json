@@ -1,7 +1,7 @@
 {
   "status": "AWAITING_INDEPENDENT_VALIDATOR_REVIEW",
-  "all_exclusions_rows": 172,
-  "routine_inclusion_population": 810,
+  "all_exclusions_rows": 173,
+  "routine_inclusion_population": 809,
   "routine_inclusion_sample_rows": 81,
   "routine_inclusion_fraction": 0.1,
   "sampling_seed": 120812,

@@ -41,6 +41,7 @@ manual_exclusions:
   LT02166: "POLYMER_OR_UNRESOLVED_INORGANIC: auranofin requires intact gold coordination"
   LT02395: "BIOLOGIC_OR_MACROMOLECULE: carfilzomib is a tetrapeptide epoxyketone"
   LT02336: "POLYMER_OR_UNRESOLVED_INORGANIC: gadobutrol requires intact gadolinium coordination"
+  LT02330: "BIOLOGIC_OR_MACROMOLECULE: erythropoietin is the epoetin biologic and the PubChem small record is not the therapeutic protein"
   LT02337: "POLYMER_OR_UNRESOLVED_INORGANIC: sodium bicarbonate has no carbon-containing small-molecule drug parent"
   LT02404: "POLYMER_OR_UNRESOLVED_INORGANIC: gadoxetate requires intact gadolinium coordination"
   LT02876: "POLYMER_OR_UNRESOLVED_INORGANIC: gadoterate requires intact gadolinium coordination"
