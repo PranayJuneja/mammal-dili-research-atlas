@@ -19,6 +19,7 @@ from mammal_dili.embeddings.mammal import (
 from mammal_dili.grouping.scaffolds import build_groups_and_folds
 from mammal_dili.lock import create_protocol_lock
 from mammal_dili.modelling.nested_cv import run_nested_cv, run_update_transport
+from mammal_dili.reporting.report import generate_research_report
 from mammal_dili.statistics.estimate import estimate_results, estimate_update_results
 from mammal_dili.statistics.precision import simulate_precision
 
@@ -50,6 +51,7 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("estimate")
     commands.add_parser("estimate-update")
     commands.add_parser("simulate-precision")
+    commands.add_parser("generate-report")
     return root
 
 
@@ -187,6 +189,16 @@ def main() -> None:
         print(json.dumps(result["paired_delta_auroc"], indent=2))
     elif args.command == "simulate-precision":
         print(json.dumps(simulate_precision("audit/qc/precision_simulation.csv"), indent=2))
+    elif args.command == "generate-report":
+        result = generate_research_report(
+            "data/processed/cohort_audit.csv",
+            "artifacts/folds/outer_folds.csv",
+            "artifacts/predictions/oof_predictions.csv",
+            "artifacts/results/results.json",
+            "artifacts/results/update_results.json",
+            "artifacts/report",
+        )
+        print(json.dumps(result["primary"], indent=2))
 
 
 if __name__ == "__main__":
