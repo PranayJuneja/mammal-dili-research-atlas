@@ -7,8 +7,11 @@ models:
 classifier: "L2 logistic regression"
 solver: "liblinear"
 max_iterations: 5000
+tolerance: 0.0001
+fit_intercept: true
 regularization_grid: [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
 class_weight: null
+robustness_class_weight: "balanced"
 primary_metric: "AUROC"
 primary_contrast: "D-B"
 practical_gain: 0.03
@@ -16,4 +19,3 @@ threshold: "training-fold Youden"
 sensitivity_target: 0.80
 bootstrap_resamples: 2000
 bootstrap_seed: 120900
-

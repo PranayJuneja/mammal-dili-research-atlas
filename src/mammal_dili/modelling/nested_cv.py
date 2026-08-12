@@ -109,6 +109,8 @@ def _pipeline(feature_set: FeatureSet, c_value: float, config: dict) -> Pipeline
                     C=float(c_value),
                     class_weight=config["class_weight"],
                     max_iter=int(config["max_iterations"]),
+                    tol=float(config["tolerance"]),
+                    fit_intercept=bool(config["fit_intercept"]),
                     random_state=int(config["classifier_seed"]),
                 ),
             ),
@@ -170,9 +172,14 @@ def run_nested_cv(
     population: str = "primary",
     model_names: tuple[str, ...] = ("A", "B", "C", "D"),
     validation_design: str = "scaffold_grouped",
+    class_weight_mode: str = "primary",
 ) -> pd.DataFrame:
     protocol_lock = require_protocol_lock()
     config = validate_config(config_path)
+    if class_weight_mode == "balanced_robustness":
+        config["class_weight"] = config["robustness_class_weight"]
+    elif class_weight_mode != "primary":
+        raise ValueError(f"Unknown class-weight mode: {class_weight_mode}")
     folds_config = validate_config("configs/folds.yaml")
     seeds = validate_config("configs/seeds.yaml")
     config = {**config, "inner_folds": folds_config["inner_folds"], "classifier_seed": seeds["classifier"]}
@@ -300,6 +307,7 @@ def run_nested_cv(
             "models": list(model_names),
             "population": population,
             "validation_design": validation_design,
+            "class_weight_mode": class_weight_mode,
             "analysis_folds_sha256": sha256_file(target.with_suffix(".folds.csv")),
             "repeats": len(repeat_columns),
             "folds_sha256": sha256_file(folds_path),

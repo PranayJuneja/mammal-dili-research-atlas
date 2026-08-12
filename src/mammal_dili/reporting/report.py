@@ -122,6 +122,11 @@ def _paper_markdown(summary: dict) -> str:
     )
     update = summary["update_transport"]["paired_delta_auroc"]
     update_lower, update_upper = update["ci95"]
+    robustness_rows = "\n".join(
+        f"| {name.replace('_', ' ')} | {result['primary']['delta_auroc']:+.3f} | "
+        f"{result['primary']['ci95'][0]:+.3f} to {result['primary']['ci95'][1]:+.3f} |"
+        for name, result in summary["robustness"].items()
+    )
     return f"""# Frozen MAMMAL representations for drug-level DILI concern: a paired scaffold-grouped benchmark
 
 ## Abstract
@@ -183,6 +188,14 @@ The paired change was **{primary['delta_auroc']:+.3f}** (95% CI **{lower:+.3f} t
 
 The untouched added-drug cohort estimate was {update['estimate']:+.3f} (95% CI {update_lower:+.3f} to {update_upper:+.3f}). The machine-readable error table contains {summary['important_false_negative_rows']} model-drug rows in which a `vMost` drug fell below the training-derived Youden threshold in at least one repeat.
 
+### Pre-specified robustness analyses
+
+| Analysis | D-minus-B AUROC | 95% CI |
+|---|---:|---:|
+{robustness_rows}
+
+The random-split analysis is explicitly optimistic and cannot replace scaffold-grouped validation. The `vMost`-versus-`vNo` and class-balanced analyses are sensitivity checks; none redefines the primary estimand.
+
 ## Interpretation
 
 {primary['interpretation']} The result should be interpreted jointly with precision-recall performance, probability error, calibration, sensitivity/specificity, transport behavior, and important false negatives. A positive AUROC difference does not establish clinical utility; an interval crossing zero does not prove equivalence; and an upper interval below +0.03 addresses only the pre-specified size of improvement under this design.
@@ -203,6 +216,9 @@ def generate_research_report(
     predictions_path: str | Path,
     results_path: str | Path,
     update_results_path: str | Path,
+    vmost_results_path: str | Path,
+    random_results_path: str | Path,
+    balanced_results_path: str | Path,
     output_directory: str | Path,
 ) -> dict:
     cohort = pd.read_csv(cohort_path)
@@ -210,6 +226,11 @@ def generate_research_report(
     predictions = pd.read_csv(predictions_path)
     results = _load_json(results_path)
     update_results = _load_json(update_results_path)
+    robustness = {
+        "vmost_vs_vno": _load_json(vmost_results_path),
+        "stratified_random": _load_json(random_results_path),
+        "class_balanced": _load_json(balanced_results_path),
+    }
     target = Path(output_directory)
     target.mkdir(parents=True, exist_ok=True)
 
@@ -249,6 +270,7 @@ def generate_research_report(
         "primary": primary,
         "models": results["models"],
         "update_transport": update_results,
+        "robustness": robustness,
         "flow": flow,
         "important_false_negative_rows": len(errors),
         "scope": results["scope"],
@@ -258,6 +280,9 @@ def generate_research_report(
             "predictions": sha256_file(predictions_path),
             "results": sha256_file(results_path),
             "update_results": sha256_file(update_results_path),
+            "vmost_results": sha256_file(vmost_results_path),
+            "random_results": sha256_file(random_results_path),
+            "balanced_results": sha256_file(balanced_results_path),
         },
     }
     write_json(target / "research_summary.json", summary)

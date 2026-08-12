@@ -118,8 +118,11 @@ class AnalysisConfig(StrictModel):
     classifier: str
     solver: str
     max_iterations: int
+    tolerance: float
+    fit_intercept: bool
     regularization_grid: list[float]
     class_weight: str | None
+    robustness_class_weight: str
     primary_metric: str
     primary_contrast: str
     practical_gain: float

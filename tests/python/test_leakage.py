@@ -12,6 +12,8 @@ def _config() -> dict:
         "solver": "liblinear",
         "class_weight": None,
         "max_iterations": 100,
+        "tolerance": 0.0001,
+        "fit_intercept": True,
         "classifier_seed": 17,
     }
 

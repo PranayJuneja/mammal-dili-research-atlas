@@ -49,10 +49,12 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("cross-validate")
     commands.add_parser("cross-validate-vmost")
     commands.add_parser("cross-validate-random")
+    commands.add_parser("cross-validate-balanced")
     commands.add_parser("evaluate-update")
     commands.add_parser("estimate")
     commands.add_parser("estimate-vmost")
     commands.add_parser("estimate-random")
+    commands.add_parser("estimate-balanced")
     commands.add_parser("estimate-update")
     commands.add_parser("simulate-precision")
     commands.add_parser("generate-report")
@@ -189,6 +191,17 @@ def main() -> None:
             validation_design="stratified_random",
         )
         print(f"Generated {len(result)} optimistic random-split robustness predictions")
+    elif args.command == "cross-validate-balanced":
+        result = run_nested_cv(
+            "artifacts/folds/outer_folds.csv",
+            "artifacts/features/conventional.npz",
+            "artifacts/features/mammal.npz",
+            "configs/analysis.yaml",
+            "artifacts/predictions/balanced_oof_predictions.csv",
+            model_names=("B", "D"),
+            class_weight_mode="balanced_robustness",
+        )
+        print(f"Generated {len(result)} class-balanced robustness predictions")
     elif args.command == "estimate":
         result = estimate_results(
             "artifacts/predictions/oof_predictions.csv",
@@ -210,6 +223,14 @@ def main() -> None:
             "configs/analysis.yaml",
             "artifacts/results/random_split_results.json",
             analysis_label="pre-specified optimistic stratified-random robustness analysis",
+        )
+        print(json.dumps(result["primary"], indent=2))
+    elif args.command == "estimate-balanced":
+        result = estimate_results(
+            "artifacts/predictions/balanced_oof_predictions.csv",
+            "configs/analysis.yaml",
+            "artifacts/results/balanced_results.json",
+            analysis_label="pre-specified class-balanced logistic-regression robustness analysis",
         )
         print(json.dumps(result["primary"], indent=2))
     elif args.command == "evaluate-update":
@@ -238,6 +259,9 @@ def main() -> None:
             "artifacts/predictions/oof_predictions.csv",
             "artifacts/results/results.json",
             "artifacts/results/update_results.json",
+            "artifacts/results/vmost_vno_results.json",
+            "artifacts/results/random_split_results.json",
+            "artifacts/results/balanced_results.json",
             "artifacts/report",
         )
         print(json.dumps(result["primary"], indent=2))
