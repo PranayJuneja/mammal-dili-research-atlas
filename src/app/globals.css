@@ -685,13 +685,14 @@ a {
 .effect-number strong { margin-block: 8px; color: var(--amber); font-family: var(--font-display), sans-serif; font-size: clamp(4rem, 7vw, 7rem); letter-spacing: -.06em; line-height: .95; }
 .effect-number small, .effect-plot > small { color: #91aab4; }
 .effect-plot { display: flex; min-width: 0; flex-direction: column; }
-.effect-labels { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; color: #91aab4; font-family: var(--font-mono), monospace; font-size: 10px; }
-.effect-labels span:nth-child(2), .effect-labels span:nth-child(3) { text-align: center; }
-.effect-labels span:last-child { text-align: right; }
+.effect-labels { position: relative; height: 14px; color: #91aab4; font-family: var(--font-mono), monospace; font-size: 10px; }
+.effect-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.effect-labels .effect-label-start { left: 0; transform: none; }
+.effect-labels .effect-label-end { right: 0; transform: none; }
 .effect-axis { position: relative; height: 84px; margin-top: 14px; border-top: 2px solid rgba(255,255,255,.22); }
 .effect-zero, .effect-benchmark { position: absolute; top: -10px; bottom: 18px; width: 1px; }
-.effect-zero { left: 50%; background: rgba(255,255,255,.45); }
-.effect-benchmark { left: 65%; background: var(--amber); }
+.effect-zero { background: rgba(255,255,255,.45); }
+.effect-benchmark { background: var(--amber); }
 .effect-interval { position: absolute; top: 37px; height: 6px; border-radius: 999px; background: var(--teal-light); }
 .effect-point { position: absolute; top: 29px; width: 22px; height: 22px; border: 4px solid var(--ink-deep); border-radius: 50%; background: var(--amber); transform: translateX(-50%); }
 

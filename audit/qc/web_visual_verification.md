@@ -42,6 +42,5 @@ result before it renders.
 
 The production build was checked separately. Interaction and geometry checks used a
 local Next.js development server and Chrome DevTools Protocol with desktop and exact
-mobile device metrics. The browser-verification skill advertised in the session was
-not present at its configured filesystem path, so this documented CDP fallback was
-used.
+mobile device metrics. The advertised automated browser-verification executable was
+not callable in this session, so this documented direct-CDP fallback was used.

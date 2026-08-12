@@ -65,4 +65,19 @@ describe("ResultDashboard", () => {
       "/results/research_report.md",
     );
   });
+
+  it("expands the effect scale instead of clipping a wide confidence interval", () => {
+    const wide = {
+      ...complete,
+      primary: { ...complete.primary!, ci95: [-0.2, 0.14] as [number, number] },
+    };
+    const { container } = render(<ResultDashboard data={wide} />);
+    const interval = container.querySelector<HTMLElement>("[data-testid='effect-interval']");
+    expect(interval).not.toBeNull();
+    if (!interval) throw new Error("Effect interval was not rendered");
+    expect(interval.style.left).not.toBe("0%");
+    expect(interval.style.width).not.toBe("100%");
+    expect(container).toHaveTextContent("-0.21");
+    expect(container).toHaveTextContent("+0.15");
+  });
 });

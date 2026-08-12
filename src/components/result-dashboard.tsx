@@ -51,9 +51,14 @@ export function ResultDashboard({ data }: { data: ResearchResults }) {
   if (data.status !== "complete" || !data.primary || !data.update_transport) return null;
 
   const [lower, upper] = data.primary.ci95;
-  const effectLeft = Math.max(0, Math.min(100, ((data.primary.delta_auroc + 0.1) / 0.2) * 100));
-  const intervalLeft = Math.max(0, Math.min(100, ((lower + 0.1) / 0.2) * 100));
-  const intervalRight = Math.max(0, Math.min(100, ((upper + 0.1) / 0.2) * 100));
+  const axisMin = Math.floor((Math.min(-0.1, lower, data.primary.delta_auroc) - 0.01) * 100 + 1e-9) / 100;
+  const axisMax = Math.ceil((Math.max(0.1, upper, data.primary.delta_auroc) + 0.01) * 100 - 1e-9) / 100;
+  const toPosition = (value: number) => ((value - axisMin) / (axisMax - axisMin)) * 100;
+  const effectLeft = toPosition(data.primary.delta_auroc);
+  const intervalLeft = toPosition(lower);
+  const intervalRight = toPosition(upper);
+  const zeroLeft = toPosition(0);
+  const benchmarkLeft = toPosition(0.03);
 
   return (
     <section className="section results-section" id="results" aria-labelledby="results-heading">
@@ -73,11 +78,16 @@ export function ResultDashboard({ data }: { data: ResearchResults }) {
             <small>95% CI {signed(lower)} to {signed(upper)}</small>
           </div>
           <div className="effect-plot" aria-label={`Delta AUROC ${signed(data.primary.delta_auroc)}, 95% confidence interval ${signed(lower)} to ${signed(upper)}`}>
-            <div className="effect-labels"><span>−0.10</span><span>0</span><span>+0.03</span><span>+0.10</span></div>
+            <div className="effect-labels">
+              <span className="effect-label-start">{signed(axisMin, 2)}</span>
+              <span style={{ left: `${zeroLeft}%` }}>0</span>
+              <span style={{ left: `${benchmarkLeft}%` }}>+0.03</span>
+              <span className="effect-label-end">{signed(axisMax, 2)}</span>
+            </div>
             <div className="effect-axis">
-              <i className="effect-zero" />
-              <i className="effect-benchmark" />
-              <span className="effect-interval" style={{ left: `${intervalLeft}%`, width: `${Math.max(1, intervalRight - intervalLeft)}%` }} />
+              <i className="effect-zero" style={{ left: `${zeroLeft}%` }} />
+              <i className="effect-benchmark" style={{ left: `${benchmarkLeft}%` }} />
+              <span data-testid="effect-interval" className="effect-interval" style={{ left: `${intervalLeft}%`, width: `${Math.max(1, intervalRight - intervalLeft)}%` }} />
               <b className="effect-point" style={{ left: `${effectLeft}%` }} />
             </div>
             <small>Complete-scaffold paired bootstrap · 2,000 resamples</small>
