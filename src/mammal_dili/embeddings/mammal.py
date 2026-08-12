@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import platform
 import time
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -45,7 +46,11 @@ def select_blind_pilot(cohort_path: str | Path, output_path: str | Path, total: 
         ("PILOT-17", "C[C@H](O)[C@@H](O)CO", "multiple stereocentres"),
         ("PILOT-18", "C1=CC=C(C=C1)S(=O)(=O)N", "sulfur-containing aromatic"),
         ("PILOT-19", "N#CC1=NC=CC=C1", "heteroaromatic nitrile"),
-        ("PILOT-20", "C" * 1900, "valid structure near configured tokenizer length limit"),
+        (
+            "PILOT-20",
+            "[13CH3]" + "[13CH2]" * 330 + "[13CH3]",
+            "valid isotope-explicit structure measured near configured tokenizer length limit",
+        ),
     ]
     if total != 20:
         raise ValueError("The frozen pilot contract requires exactly 20 structures")
@@ -62,9 +67,11 @@ def _load_runtime(config: dict):
     from huggingface_hub import snapshot_download
     from mammal.model import Mammal
 
-    snapshot = snapshot_download(
-        repo_id=config["checkpoint"],
-        revision=config["checkpoint_revision"],
+    snapshot = Path(
+        snapshot_download(
+            repo_id=config["checkpoint"],
+            revision=config["checkpoint_revision"],
+        )
     )
     model = Mammal.from_pretrained(
         pretrained_model_name_or_path=snapshot,
@@ -73,8 +80,8 @@ def _load_runtime(config: dict):
     )
     model.eval()
     model = model.to(device=torch.device(config["device"]), dtype=torch.float32)
-    tokenizer = ModularTokenizerOp.from_pretrained(snapshot)
-    return torch, model, tokenizer, Path(snapshot)
+    tokenizer = ModularTokenizerOp.from_pretrained(snapshot / "tokenizer")
+    return torch, model, tokenizer, snapshot
 
 
 def extract_embeddings(
@@ -94,6 +101,7 @@ def extract_embeddings(
     embeddings: list[np.ndarray] = []
     token_counts: list[int] = []
     failures: list[dict] = []
+    token_diagnostics: list[dict] = []
     started = time.perf_counter()
     try:
         import psutil
@@ -112,12 +120,24 @@ def extract_embeddings(
             valid_indices: list[int] = []
             for local_index, row in enumerate(batch.to_dict(orient="records")):
                 prompt = make_prompt(row["standardised_isomeric_smiles"], config)
-                tokenized = tokenizer(
-                    {"text": prompt},
-                    key_in="text",
-                    key_out_tokens_ids="input_ids",
-                    key_out_attention_mask="attention_mask",
-                )
+                try:
+                    with warnings.catch_warnings(record=True) as caught:
+                        warnings.simplefilter("always")
+                        tokenized = tokenizer(
+                            {"text": prompt},
+                            key_in="text",
+                            key_out_tokens_ids="input_ids",
+                            key_out_attention_mask="attention_mask",
+                        )
+                except Exception as error:  # noqa: BLE001 - third-party tokenizer has no stable exception base
+                    failures.append(
+                        {
+                            "drug_id": row["drug_id"],
+                            "reason": "TOKENIZATION_FAILURE",
+                            "detail": f"{type(error).__name__}: {error}",
+                        }
+                    )
+                    continue
                 ids = tokenized["input_ids"]
                 mask = tokenized["attention_mask"]
                 ids = ids.tolist() if hasattr(ids, "tolist") else list(ids)
@@ -125,6 +145,19 @@ def extract_embeddings(
                 if len(ids) > int(config["max_sequence_length"]):
                     failures.append({"drug_id": row["drug_id"], "reason": "OVERLENGTH", "tokens": len(ids)})
                     continue
+                token_diagnostics.append(
+                    {
+                        "drug_id": row["drug_id"],
+                        "token_count": int(sum(mask)),
+                        "sequence_length": len(ids),
+                        "max_sequence_length": int(config["max_sequence_length"]),
+                        "truncated": False,
+                        "token_id_prefix": ids[:4],
+                        "token_id_suffix": ids[-3:],
+                        "special_token_layout": config["special_tokens"],
+                        "warnings": sorted({str(item.message) for item in caught}),
+                    }
+                )
                 token_ids.append(ids)
                 masks.append(mask)
                 valid_indices.append(local_index)
@@ -208,6 +241,7 @@ def extract_embeddings(
             "token_count_min": min(token_counts, default=None),
             "token_count_max": max(token_counts, default=None),
             "configured_failure_codes": config["failure_codes"],
+            "token_diagnostics": token_diagnostics,
             "failures": failures,
             "output_sha256": sha256_file(target),
         },
