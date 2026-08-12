@@ -74,6 +74,10 @@ def test_tripod_ai_mapping_has_every_official_subitem_and_honest_states() -> Non
     assert len(rows) == 52
     assert tuple(row["item"] for row in rows) == TRIPOD_AI_ITEM_IDS
     assert {row["status"] for row in rows} >= {"Reported", "Pending", "Not applicable"}
+    dispositions = {row["item"]: row["status"] for row in rows}
+    assert dispositions["8c"] == "Pending"
+    assert dispositions["20b"] == "Pending"
+    assert dispositions["21"] == "Pending"
     assert all(row["evidence_location"] for row in rows)
     mapping = _tripod_ai_mapping()
     assert "10.1136/bmj-2023-078378" in mapping
