@@ -31,6 +31,7 @@ SITE_DOWNLOAD_FILES = (
     "research_report.md",
     "plain_language_summary.md",
     "tripod_ai_applicability.md",
+    "tripod_ai_checklist.csv",
     "presentation_outline.md",
     "kuhs_submission_protocol.md",
     "primary_effect.svg",
@@ -41,6 +42,14 @@ SITE_DOWNLOAD_FILES = (
     "important_false_negatives.csv",
     "research_summary.json",
     "report_manifest.json",
+)
+
+TRIPOD_AI_ITEM_IDS = (
+    "1", "2", "3a", "3b", "3c", "4", "5a", "5b", "6a", "6b", "6c", "7",
+    "8a", "8b", "8c", "9a", "9b", "9c", "10", "11", "12a", "12b", "12c",
+    "12d", "12e", "12f", "12g", "13", "14", "15", "16", "17", "18a", "18b",
+    "18c", "18d", "18e", "18f", "19", "20a", "20b", "20c", "21", "22", "23a",
+    "23b", "24", "25", "26", "27a", "27b", "27c",
 )
 
 
@@ -235,7 +244,7 @@ def _paper_markdown(summary: dict) -> str:
         f"{result['primary']['ci95'][0]:+.3f} to {result['primary']['ci95'][1]:+.3f} |"
         for name, result in summary["robustness"].items()
     )
-    return f"""# Frozen MAMMAL representations for drug-level DILI concern: a paired scaffold-grouped benchmark
+    return f"""# Development and evaluation of frozen MAMMAL representations for drug-level DILI concern prediction: a paired scaffold-grouped benchmark
 
 ## Abstract
 
@@ -314,11 +323,25 @@ Across the primary fits, {summary['convergence']['primary']['warning_count']} co
 
 ## Limitations
 
-The outcome is a curated drug-level concern category, not individual patient injury. Molecular structure omits dose, exposure, metabolism, immune mechanisms, genetics, comorbidity, and co-medication. Labels are imperfect regulatory/evidentiary constructs. Scaffold separation limits downstream analogue leakage but cannot establish whether a pretrained foundation model encountered study molecules. Results concern one frozen representation recipe and one conventional learner, not the full MAMMAL family.
+The outcome is a curated drug-level concern category, not individual patient injury. Molecular structure omits dose, exposure, metabolism, immune mechanisms, genetics, comorbidity, and co-medication. Labels are imperfect regulatory/evidentiary constructs. Scaffold separation limits downstream analogue leakage but cannot establish whether a pretrained foundation model encountered study molecules. Results concern one frozen representation recipe and one conventional learner, not the full MAMMAL family. The source contains no person-level sociodemographic attributes, so clinical subgroup fairness cannot be assessed.
+
+## Future research
+
+Future work should evaluate independently curated drug sets, representation recipes fixed without outcome feedback, exposure and host-context features, and—before any clinical claim—patient-level cohorts with explicit fairness and clinical-utility assessment. The current benchmark is not implementation-ready.
 
 ## Scope statement
 
 This study evaluates drug-level prediction of curated DILI concern within DILIrank 2.0. It does not estimate an individual patient's probability of liver injury, establish drug-specific causality, recommend prescribing decisions, or replace laboratory, clinical, pharmacovigilance, or regulatory assessment.
+
+## References
+
+1. Olubamiwa AO, Qu Y, Connor S, Tong W, Li D, Chen M. DILIrank 2.0: an updated and expanded database for drug-induced liver injury risk based on FDA labeling and a literature review. Drug Discov Today. 2025;30(11):104485. doi:10.1016/j.drudis.2025.104485.
+2. US Food and Drug Administration. Drug-Induced Liver Injury Rank (DILIrank) 2.0 Dataset. Available from: https://www.fda.gov/science-research/liver-toxicity-knowledge-base-ltkb/drug-induced-liver-injury-rank-dilirank-20-dataset. Accessed 2026 Aug 12.
+3. Shoshan Y, Raboh M, Ozery-Flato M, Ratner V, Golts A, Weber JK, et al. MAMMAL—Molecular Aligned Multi-Modal Architecture and Language for biomedical discovery. npj Drug Discov. 2026;3:14. doi:10.1038/s44386-026-00047-4.
+4. Kim S, Chen J, Cheng T, Gindulyte A, He J, He S, et al. PubChem 2023 update. Nucleic Acids Res. 2023;51(D1):D1373–D1380. doi:10.1093/nar/gkac956.
+5. Rogers D, Hahn M. Extended-connectivity fingerprints. J Chem Inf Model. 2010;50(5):742–754. doi:10.1021/ci100050t.
+6. Bemis GW, Murcko MA. The properties of known drugs. 1. Molecular frameworks. J Med Chem. 1996;39(15):2887–2893. doi:10.1021/jm9602928.
+7. Collins GS, Moons KGM, Dhiman P, Riley RD, Beam AL, Van Calster B, et al. TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods. BMJ. 2024;385:e078378. doi:10.1136/bmj-2023-078378.
 """
 
 
@@ -354,37 +377,97 @@ The checkpoint, tokenizer, prompt, pooling rule, molecule set, comparator, folds
 """
 
 
-def _tripod_ai_mapping() -> str:
-    rows = [
-        ("Title and abstract", "research_report.md — title and structured abstract", "Reported"),
-        ("Background and objectives", "research_report.md — Research question and estimand", "Reported"),
-        ("Source of data", "study_flow.json; source manifests; cohort audit", "Reported"),
-        ("Participants / units", "Drug-level eligible DILIrank records; no human participants", "Reported"),
-        ("Outcome", "DILIrank vMost/vLess versus vNo coding", "Reported"),
-        ("Predictors", "Descriptor, Morgan, and frozen MAMMAL contracts", "Reported"),
-        ("Sample size", "Pre-performance precision simulation and diagnostics", "Reported"),
-        ("Missing data", "Common-complete 100% feature contract; descriptor median inside training folds", "Reported"),
-        ("Model development", "Repeated nested scaffold-grouped L2 logistic regression", "Reported"),
-        ("Model performance", "Model table, ROC/PR/calibration files, repeat stability", "Reported"),
-        ("Model evaluation", "Primary development validation plus untouched update transport", "Reported"),
-        ("Class imbalance", "Primary unweighted fit and pre-specified balanced robustness analysis", "Reported"),
-        ("Uncertainty", "2,000 complete-scaffold paired bootstrap resamples", "Reported"),
-        ("Interpretation", "Locked zero and +0.03 confidence-interval regions", "Reported"),
-        ("Limitations", "research_report.md and generated website boundaries", "Reported"),
-        ("Protocol and registration", "Versioned protocol, PA-01, PA-02, G2/G3/G4/G5 locks", "Reported"),
-        ("Data/code availability", "REPRODUCING.md and public archive subject to licences/approval", "Reported with conditions"),
-        ("Patient/public involvement", "Not applicable to this public drug-record benchmark", "Not applicable"),
+def _tripod_ai_rows() -> list[dict[str, str]]:
+    # Item IDs and D/E applicability follow the official 7-February-2024
+    # TRIPOD+AI expanded checklist. Descriptions are concise project-specific
+    # paraphrases; the official checklist remains the normative source.
+    values = [
+        ("1", "D;E", "Informative title", "research_report.md title", "Reported"),
+        ("2", "D;E", "Structured abstract", "TRIPOD+AI for Abstracts line audit", "Pending"),
+        ("3a", "D;E", "Context and rationale", "research_report.md Research question", "Reported"),
+        ("3b", "D;E", "Target and intended purpose", "research_report.md Scope statement", "Reported"),
+        ("3c", "D;E", "Known health inequalities", "No human population or attributes", "Not applicable"),
+        ("4", "D;E", "Objectives", "research_report.md Abstract and Research question", "Reported"),
+        ("5a", "D;E", "Data sources and rationale", "Methods; source manifests; evidence ledger", "Reported"),
+        ("5b", "D;E", "Data dates", "FDA release manifest and cohort audit", "Reported"),
+        ("6a", "D;E", "Setting and centres", "Public drug records; no clinical centres", "Not applicable"),
+        ("6b", "D;E", "Eligibility criteria", "Methods; cohort_audit.csv", "Reported"),
+        ("6c", "D;E", "Treatments received", "No participants or treatment pathway", "Not applicable"),
+        ("7", "D;E", "Preparation and quality checks", "Methods; curation and QC manifests", "Reported"),
+        ("8a", "D;E", "Outcome definition", "Methods Cohort and outcome", "Reported"),
+        ("8b", "D;E", "Outcome assessor details", "Verify upstream DILIrank assessor reporting", "Pending"),
+        ("8c", "D;E", "Outcome-assessment blinding", "Outcome frozen before feature engineering", "Reported"),
+        ("9a", "D", "Initial predictor choice", "Methods Representations; protocol", "Reported"),
+        ("9b", "D;E", "Predictor definitions", "Feature manifests and configs/analysis.yaml", "Reported"),
+        ("9c", "D;E", "Predictor assessor details", "Deterministic software measurements", "Not applicable"),
+        ("10", "D;E", "Study-size rationale", "Precision assessment and study flow", "Reported"),
+        ("11", "D;E", "Missing-data handling", "Methods; common-complete and fold-only imputation", "Reported"),
+        ("12a", "D", "Data partitioning", "Methods Validation and analysis; fold summary", "Reported"),
+        ("12b", "D", "Predictor transformations", "Analysis config and feature manifests", "Reported"),
+        ("12c", "D", "Model building and validation", "Methods; prediction manifest", "Reported"),
+        ("12d", "D;E", "Cluster heterogeneity", "Chemical groups used for separation, not centres", "Not applicable"),
+        ("12e", "D;E", "Performance measures and plots", "Methods; model tables and SVG companions", "Reported"),
+        ("12f", "E", "Updating after evaluation", "Post-evaluation updating prohibited", "Not applicable"),
+        ("12g", "E", "Prediction calculation", "REPRODUCING.md and prediction manifests", "Reported"),
+        ("13", "D;E", "Class-imbalance methods", "Primary unweighted and locked balanced sensitivity", "Reported"),
+        ("14", "D;E", "Fairness approach", "No person-level protected attributes; limitation stated", "Not applicable"),
+        ("15", "D", "Model output and thresholds", "Probability outputs and fold-derived thresholds", "Reported"),
+        ("16", "D;E", "Development/evaluation differences", "Development versus update cohort tables", "Reported"),
+        ("17", "D;E", "Ethics approval and consent", "Private IEC record and approved amendments", "Pending"),
+        ("18a", "D;E", "Funding and funder role", "Final author declaration", "Pending"),
+        ("18b", "D;E", "Conflicts and disclosures", "Final author declaration", "Pending"),
+        ("18c", "D;E", "Protocol availability", "docs/02; PA-01; PA-02; execution lock", "Reported"),
+        ("18d", "D;E", "Study registration", "Final registration statement or identifier", "Pending"),
+        ("18e", "D;E", "Data availability", "FDA/PubChem terms and final archive statement", "Pending"),
+        ("18f", "D;E", "Code availability", "REPRODUCING.md; exact environment locks", "Reported"),
+        ("19", "D;E", "Patient/public involvement", "Final no-involvement declaration", "Pending"),
+        ("20a", "D;E", "Record flow", "study_flow.json and research_report.md Study flow", "Reported"),
+        ("20b", "D;E", "Data characteristics", "cohort/scaffold and model companion tables", "Reported"),
+        ("20c", "E", "Evaluation/development comparison", "Detailed update-distribution comparison", "Pending"),
+        ("21", "D;E", "Analysis sample/event counts", "Study flow and outcome counts", "Reported"),
+        ("22", "D", "Full model specification", "Code is available; fitted-model export", "Pending"),
+        ("23a", "D;E", "Performance with uncertainty", "Model table, primary CI, repeat companions", "Reported"),
+        ("23b", "D;E", "Performance heterogeneity by centres", "No clinical centre clusters", "Not applicable"),
+        ("24", "E", "Updated-model results", "No post-evaluation model updating", "Not applicable"),
+        ("25", "D;E", "Interpretation and fairness", "research_report.md Interpretation", "Reported"),
+        ("26", "D;E", "Limitations and generalisability", "research_report.md Limitations", "Reported"),
+        ("27a", "D", "Poor/unavailable implementation inputs", "Not an implementation-ready clinical model", "Not applicable"),
+        ("27b", "D", "User interaction and expertise", "No intended clinical users", "Not applicable"),
+        ("27c", "D;E", "Future evaluation", "Limitations and final discussion", "Reported"),
     ]
-    body = "\n".join(f"| {item} | {location} | {status} |" for item, location, status in rows)
+    rows = [
+        {
+            "item": item,
+            "applies_to": applies_to,
+            "requirement": requirement,
+            "evidence_location": evidence,
+            "status": status,
+        }
+        for item, applies_to, requirement, evidence, status in values
+    ]
+    if tuple(row["item"] for row in rows) != TRIPOD_AI_ITEM_IDS:
+        raise AssertionError("TRIPOD+AI mapping must contain all 52 official subitems")
+    return rows
+
+
+def _tripod_ai_mapping() -> str:
+    rows = _tripod_ai_rows()
+    body = "\n".join(
+        f"| {row['item']} | {row['applies_to']} | {row['requirement']} | "
+        f"{row['evidence_location']} | {row['status']} |"
+        for row in rows
+    )
     return f"""# TRIPOD+AI applicability map
 
-This project is a comparative drug-level prediction benchmark rather than a clinical patient-risk model. Items are mapped to the closest applicable report evidence; `Not applicable` is used instead of inventing patient-level procedures.
+This project is a comparative drug-level prediction benchmark rather than a clinical patient-risk model. The table maps every official TRIPOD+AI item/subitem identifier. `Pending` is retained for author, governance, registration, archive, or final-model details that cannot be truthfully completed by code. `Not applicable` is used for person-level or implementation items that do not fit this drug-record benchmark.
 
-| Reporting domain | Evidence location | Disposition |
-|---|---|---|
+| Item | D/E | Concise requirement | Exact project evidence | Disposition |
+|---|---|---|---|---|
 {body}
 
-The student and faculty guide must check this map against the current official TRIPOD+AI checklist before submission. This file is an applicability aid, not a certification claim.
+Normative source: Collins GS, Moons KGM, Dhiman P, et al. BMJ. 2024;385:e078378. doi:10.1136/bmj-2023-078378. Expanded checklist version 7-February-2024: https://www.tripod-statement.org/wp-content/uploads/2024/04/TRIPODAI-Supplement.pdf.
+
+The student and faculty guide must resolve every `Pending` row and check page/line locations against the current official checklist before submission. This file is an applicability aid, not a certification claim.
 """
 
 
@@ -649,6 +732,9 @@ def generate_research_report(
     )
     (target / "tripod_ai_applicability.md").write_text(
         _tripod_ai_mapping(), encoding="utf-8"
+    )
+    pd.DataFrame(_tripod_ai_rows()).to_csv(
+        target / "tripod_ai_checklist.csv", index=False
     )
     (target / "presentation_outline.md").write_text(
         _presentation_outline(summary), encoding="utf-8"
