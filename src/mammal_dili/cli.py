@@ -263,6 +263,7 @@ def main() -> None:
             "artifacts/results/random_split_results.json",
             "artifacts/results/balanced_results.json",
             "artifacts/report",
+            "src/data/generated-results.json",
         )
         print(json.dumps(result["primary"], indent=2))
 

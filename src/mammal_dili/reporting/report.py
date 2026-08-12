@@ -220,6 +220,7 @@ def generate_research_report(
     random_results_path: str | Path,
     balanced_results_path: str | Path,
     output_directory: str | Path,
+    site_data_path: str | Path | None = None,
 ) -> dict:
     cohort = pd.read_csv(cohort_path)
     folds = pd.read_csv(folds_path)
@@ -286,5 +287,7 @@ def generate_research_report(
         },
     }
     write_json(target / "research_summary.json", summary)
+    if site_data_path is not None:
+        write_json(site_data_path, summary)
     (target / "research_report.md").write_text(_paper_markdown(summary), encoding="utf-8")
     return summary

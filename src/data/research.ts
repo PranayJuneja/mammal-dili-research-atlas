@@ -13,9 +13,9 @@ export type Phase = {
 
 export const studyStats = [
   { value: "1,336", label: "approved drugs in DILIrank 2.0", tone: "blue" },
-  { value: "982", label: "non-ambiguous records before structural review", tone: "teal" },
-  { value: "4", label: "matched representation models", tone: "amber" },
-  { value: "5 × 5", label: "repeated, nested scaffold folds", tone: "purple" },
+  { value: "809", label: "independently reviewed eligible drugs", tone: "teal" },
+  { value: "568", label: "locked chemical groups", tone: "amber" },
+  { value: "675 + 134", label: "development plus untouched update drugs", tone: "purple" },
 ];
 
 export const labelCounts = [
@@ -106,7 +106,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Identity crosswalk", "Exclusion audit", "Duplicate report", "Signed cohort lock"],
     stopRule: "Unresolved identities, duplicate conflicts, or invalid groups block modelling.",
-    status: "planned",
+    status: "cleared",
   },
   {
     id: "features",

@@ -1,0 +1,18 @@
+{
+  "status": "pending",
+  "answer": "The locked analysis has not yet produced a performance estimate.",
+  "primary": null,
+  "models": {},
+  "update_transport": null,
+  "robustness": {},
+  "flow": {
+    "dilirank_records": 1336,
+    "non_ambiguous_records_considered": 982,
+    "eligible_drugs": 809,
+    "excluded_drugs": 173,
+    "development_drugs": 675,
+    "update_drugs": 134,
+    "scaffold_groups": 568
+  },
+  "scope": "Drug-level DILIrank 2.0 concern classification; not patient-level risk or clinical validation."
+}
