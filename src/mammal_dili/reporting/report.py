@@ -260,26 +260,26 @@ def _paper_markdown(summary: dict) -> str:
 
 ## Research question and estimand
 
-The study asks an incremental question: does one frozen MAMMAL representation improve ranking performance when added to a strong conventional molecular baseline? Models B and D used identical drugs, folds, preprocessing, hyperparameter opportunities, thresholds, and classifiers. The only intended difference was the MAMMAL block. The primary point estimate is the arithmetic mean of five paired repeat-level AUROC differences.
+The study asks an incremental question: does one frozen MAMMAL representation [3] improve ranking performance when added to a strong conventional molecular baseline? Models B and D used identical drugs, folds, preprocessing, hyperparameter opportunities, thresholds, and classifiers. The only intended difference was the MAMMAL block. The primary point estimate is the arithmetic mean of five paired repeat-level AUROC differences.
 
 ## Methods
 
 ### Cohort and outcome
 
-DILIrank 2.0 categories `vMost` and `vLess` were coded positive and `vNo` negative. Ambiguous labels were excluded before structural review. Names were mapped to PubChem candidates, active moieties were adjudicated, parent structures were standardised while preserving justified stereochemistry, unsupported biologics/complexes/mixtures were excluded, and duplicate parents were resolved before grouping.
+DILIrank 2.0 categories [1,2] `vMost` and `vLess` were coded positive and `vNo` negative. Ambiguous labels were excluded before structural review. Names were mapped to PubChem candidates [4], active moieties were adjudicated, parent structures were standardised while preserving justified stereochemistry, unsupported biologics/complexes/mixtures were excluded, and duplicate parents were resolved before grouping.
 
 ### Representations
 
 - Model A: pre-specified physicochemical descriptors.
-- Model B: descriptors plus 2,048 radius-2 chirality-aware Morgan bits.
-- Model C: frozen MAMMAL embedding alone.
-- Model D: descriptors, Morgan bits, and frozen MAMMAL embedding.
+- Model B: descriptors plus 2,048 radius-2 chirality-aware Morgan bits [5].
+- Model C: frozen MAMMAL embedding alone [3].
+- Model D: descriptors, Morgan bits, and frozen MAMMAL embedding [3,5].
 
 MAMMAL weights were never updated using DILI labels. The checkpoint, revision, tokenizer bytes, checkpoint-native molecule syntax, final encoder state, attention-mask-aware mean pooling, L2 normalisation, maximum length, failure rules, and CPU execution were frozen after an outcome-blind 20-structure pilot.
 
 ### Validation and analysis
 
-Bemis-Murcko scaffolds defined groups for ring-containing structures; acyclic structures were similarity-clustered. Five outer folds were repeated five times. Preprocessing and regularisation selection occurred only inside training partitions. The 300-drug update-era source cohort was excluded from development and evaluated once after the development pipeline was fixed. The primary interval resampled complete scaffold groups, preserving model pairing and chemical clustering.
+Bemis-Murcko scaffolds [6] defined groups for ring-containing structures; acyclic structures were similarity-clustered. Five outer folds were repeated five times. Preprocessing and regularisation selection occurred only inside training partitions. The 300-drug update-era source cohort was excluded from development and evaluated once after the development pipeline was fixed. The primary interval resampled complete scaffold groups, preserving model pairing and chemical clustering.
 
 ## Results
 
@@ -328,6 +328,10 @@ The outcome is a curated drug-level concern category, not individual patient inj
 ## Future research
 
 Future work should evaluate independently curated drug sets, representation recipes fixed without outcome feedback, exposure and host-context features, and—before any clinical claim—patient-level cohorts with explicit fairness and clinical-utility assessment. The current benchmark is not implementation-ready.
+
+## Reporting completeness
+
+The companion `tripod_ai_applicability.md` and `tripod_ai_checklist.csv` map all 52 TRIPOD+AI subitems [7]. Pending author, governance, registration, archive, and model-export declarations remain visibly pending until their responsible owners complete them.
 
 ## Scope statement
 
