@@ -1,7 +1,9 @@
 # Protocol amendment PA-01: checkpoint-compatible pilot representation
 
 Date proposed: 2026-08-13 (Asia/Calcutta)  
-Status: PROPOSED — accepted MAMMAL extraction remains on hold pending independent approval
+Date approved: 2026-08-13 (Asia/Calcutta)
+
+Status: APPROVED — accepted execution remains subject to a clean protocol lock and G2 acceptance
 
 ## Scope and reason
 
@@ -55,9 +57,9 @@ All earlier pilot outputs are diagnostic and withdrawn because they either preda
 
 | Role/action | Status | Evidence boundary |
 |---|---|---|
-| Project owner acknowledgement | Pending explicit PA-01 confirmation | May be recorded in a non-identifying public governance note. |
-| Faculty guide approval | Pending explicit private confirmation | Names and signatures remain outside the public repository; only dated confirmation is recorded here. |
-| Relevant technical/scientific expert approval | Pending independent validator verdict | Fermat independently verifies the prompt, hashes, pilot, and acceptance implementation. |
-| IEC notification/approval disposition | Pending owner/guide confirmation against the private determination | Record `not required by determination`, `notified`, or `approved`, with date; do not copy identifying records here. |
+| Project owner acknowledgement | Confirmed 2026-08-13 | Direct present-day confirmation is bound to proposed PA-01 SHA-256 `eb348f17651af5982740e105d341475f34a56cbcd7ed91a29279ccb34ac1ef98`; the earlier baseline-project acknowledgement is not represented as amendment approval. |
+| Faculty guide approval | Confirmed 2026-08-13 | Project owner confirms post-proposal faculty-guide approval of substantive PA-01 SHA-256 `eb348f17651af5982740e105d341475f34a56cbcd7ed91a29279ccb34ac1ef98`; identifying evidence remains in the restricted private governance record. |
+| Relevant technical/scientific expert approval | Confirmed 2026-08-13 | Independent technical/scientific PASS is recorded in `audit/governance/pa-01-pa-02-independent-review.md`, bound to reviewed proposal SHA-256 `eb348f17651af5982740e105d341475f34a56cbcd7ed91a29279ccb34ac1ef98`. |
+| IEC notification/approval disposition | Approved 2026-08-13 | Project owner confirms a post-proposal IEC approval disposition for substantive PA-01 SHA-256 `eb348f17651af5982740e105d341475f34a56cbcd7ed91a29279ccb34ac1ef98`; identifying evidence remains in the restricted private governance record. |
 
-Accepted extraction remains prohibited while any row is pending. Once all are confirmed, change the amendment status from `PROPOSED` to `APPROVED`, add the decision date and non-identifying evidence note, re-lock the configuration if needed, and only then launch the three fresh processes.
+All amendment approvals are confirmed. Accepted extraction remains prohibited until this approved version is committed, the clean execution lock is regenerated and independently validated, and G2 then passes on three fresh processes.

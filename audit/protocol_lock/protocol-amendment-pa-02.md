@@ -1,7 +1,9 @@
 # Protocol amendment PA-02: primary development population and untouched update transport
 
 Date proposed: 2026-08-13 (Asia/Calcutta)  
-Status: PROPOSED — outcome modelling remains prohibited
+Date approved: 2026-08-13 (Asia/Calcutta)
+
+Status: APPROVED — outcome modelling remains subject to the clean execution lock and G2/G3/G4 gates
 
 ## Problem discovered before performance inspection
 
@@ -44,9 +46,9 @@ The primary estimand becomes the mean paired repeat-level `AUROC(D) - AUROC(B)` 
 
 | Role/action | Status | Evidence boundary |
 |---|---|---|
-| Project owner acknowledgement | Pending explicit PA-02 confirmation | Record only a dated, non-identifying status. |
-| Faculty guide approval | Pending explicit private confirmation | Names/signatures remain outside this repository. |
-| Biostatistical/design expert approval | Pending independent validator gate | Must verify the revised population, grouping, precision, estimators and leakage controls. |
-| IEC notification/approval disposition | Pending owner/guide confirmation | Record `not required by determination`, `notified`, or `approved`, with date. |
+| Project owner acknowledgement | Confirmed 2026-08-13 | Direct present-day confirmation is bound to proposed PA-02 SHA-256 `b1f30e6ece8a417f6fe34e8134edcfc889a8f6b7654a2f8f883267cb21febf19`; the earlier baseline-project acknowledgement is not represented as amendment approval. |
+| Faculty guide approval | Confirmed 2026-08-13 | Project owner reports that the faculty guide reviewed and approved PA-02 on the morning of 2026-08-13. Confirmation is bound to the substantive proposed amendment SHA-256 `b1f30e6ece8a417f6fe34e8134edcfc889a8f6b7654a2f8f883267cb21febf19`; identifying evidence remains in the restricted private governance record. |
+| Biostatistical/design expert approval | Confirmed 2026-08-13 | Independent biostatistical/design PASS is recorded in `audit/governance/pa-01-pa-02-independent-review.md`, bound to reviewed proposal SHA-256 `b1f30e6ece8a417f6fe34e8134edcfc889a8f6b7654a2f8f883267cb21febf19`. |
+| IEC notification/approval disposition | Approved 2026-08-13 | Project owner confirms a post-proposal IEC approval disposition for substantive PA-02 SHA-256 `b1f30e6ece8a417f6fe34e8134edcfc889a8f6b7654a2f8f883267cb21febf19`; identifying evidence remains in the restricted private governance record. |
 
-Outcome modelling remains prohibited while any row is pending. On approval, this amendment must be marked `APPROVED`, the final implementation/configuration must be committed, the protocol execution lock must be regenerated from that clean implementation revision, and the lock must actively reject later code or config drift.
+All amendment approvals are confirmed. Outcome modelling remains prohibited until this approved version and the final implementation/configuration are committed, the execution lock is regenerated from the clean revision, and every later scientific gate passes.
