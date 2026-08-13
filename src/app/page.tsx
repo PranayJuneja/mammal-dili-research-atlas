@@ -26,9 +26,29 @@ type PrimaryResult = {
   interpretation: string;
 };
 
+function parsePrimaryResult(value: unknown): PrimaryResult | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Record<string, unknown>;
+  const ci95 = candidate.ci95;
+  if (
+    typeof candidate.delta_auroc !== "number" ||
+    typeof candidate.interpretation !== "string" ||
+    !Array.isArray(ci95) ||
+    ci95.length !== 2 ||
+    !ci95.every((item) => typeof item === "number" && Number.isFinite(item))
+  ) {
+    return null;
+  }
+  return {
+    delta_auroc: candidate.delta_auroc,
+    ci95: [ci95[0] as number, ci95[1] as number],
+    interpretation: candidate.interpretation,
+  };
+}
+
 export default function HomePage() {
   const complete = generatedResults.status === "complete";
-  const primary = generatedResults.primary as PrimaryResult | null;
+  const primary = parsePrimaryResult(generatedResults.primary);
   const researchResults = generatedResults as unknown as ResearchResults;
   return (
     <>

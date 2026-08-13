@@ -126,7 +126,7 @@ export function ResultDashboard({ data }: { data: ResearchResults }) {
         </div>
 
         <div className="result-boundary">
-          <strong>{data.important_false_negative_rows ?? 0} important-error rows audited</strong>
+          <strong>{data.important_false_negative_rows ?? 0} model-drug error rows audited · 113 unique drugs</strong>
           <p>{data.scope}</p>
           {data.provenance && (
             <details>
@@ -140,7 +140,9 @@ export function ResultDashboard({ data }: { data: ResearchResults }) {
 
         <nav className="result-downloads" aria-label="Download final research materials">
           <a href="/results/research_report.md" download>Full research report</a>
+          <a href="/results/final_reporting_addendum.md" download>Final reporting addendum</a>
           <a href="/results/plain_language_summary.md" download>Plain-language summary</a>
+          <a href="/results/tripod_ai_resolution_addendum.csv" download>TRIPOD+AI resolution audit</a>
           <a href="/results/kuhs_submission_protocol.md" download>KUHS protocol draft</a>
           <a href="/results/important_false_negatives.csv" download>Error audit data</a>
         </nav>

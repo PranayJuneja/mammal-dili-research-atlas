@@ -517,6 +517,7 @@ a {
 
 .thesis-card,
 .answer-card {
+  min-width: 0;
   padding: 42px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);

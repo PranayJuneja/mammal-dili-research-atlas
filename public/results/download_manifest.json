@@ -1,0 +1,20 @@
+{
+  "files": {
+    "research_report.md": "da3b78e7de9cfe196a55d70719972c0ba6a64636a79defdd27d3b26af1d4480a",
+    "plain_language_summary.md": "15c4e7d2991dc1d277b7712a9a0ee3cd898f37bea473930d8324c824636f178c",
+    "tripod_ai_applicability.md": "ff877f4060b3a9a52ae76ccab8e662b95fd5e681af3d70b6ce7fa711c8e96b5a",
+    "tripod_ai_checklist.csv": "39e2e3775fefe67180e2aa3d377951479959ae5e71eab2f1cabb37bf7e62f2f0",
+    "presentation_outline.md": "0b6e0d15cb96745c26138d1601d41f74bf09414373bd2ce8addecb97651b61d4",
+    "kuhs_submission_protocol.md": "d844f70f3b7e5719a4e75407d0a0a18e9ff100255497faa1b8f54ca99725ffd8",
+    "primary_effect.svg": "3d3bd129259f4205f5499a39954d171f5305ce62a3aec7daae632dad2070167a",
+    "repeat_stability.svg": "8626ba4323d8ca99db1f8bb6f2ed18dbb3dece09094ab1030073af93bec4d625",
+    "model_performance.csv": "2aa663636511658e421c6e923a1a4fef9439c81a6630cf1094cf1e6f5af86e05",
+    "model_metric_uncertainty.csv": "a382f405bb89e2239dd13de00c606899a6109e6db87b9c3b386f676f843451ed",
+    "sensitivity_analyses.csv": "fc63c30f6d3dd463dfdafc61848e67b5c739045c3be6b5bcd622aa7d8df3e3d3",
+    "important_false_negatives.csv": "f6425be660376bcd5cb49bd485d2a186c783fe830ef2426e0e081011d48c9504",
+    "final_reporting_addendum.md": "76e0cb0a77357f4bd88413ccf29f0ec7dc01d577388d53ee4c7e06935d3ee6af",
+    "tripod_ai_resolution_addendum.csv": "6580d776e4f1ba22ba20faa74e62b35ddd1a6f9250b179ab6d1451edcef948da",
+    "research_summary.json": "985ab48cff8717c8d1cb512165ddd86a9456a4ff8e16c20e274148531f027e5f",
+    "report_manifest.json": "7d0ae540646b575325863d4b0a13bb730abc58ddf1251ef7afd975df92bc0466"
+  }
+}

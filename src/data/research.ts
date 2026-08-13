@@ -72,7 +72,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Signed lock declaration", "Decision record", "Named reviewers", "KUHS requirements record"],
     stopRule: "No technical pilot or outcome analysis without the written institutional determination.",
-    status: "next",
+    status: "cleared",
   },
   {
     id: "pilot",
@@ -89,7 +89,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["At least 18/20 finite vectors", "Fixed dimension", "Tolerance met", "No hidden truncation"],
     stopRule: "One correction cycle is allowed. A second failure is reported as technical infeasibility.",
-    status: "next",
+    status: "cleared",
   },
   {
     id: "curation",
@@ -123,7 +123,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Feature manifests", "Checksums", "Coverage report", "5% repeat sample"],
     stopRule: "Coverage below 90% triggers a pause and adviser review before outcomes are examined.",
-    status: "planned",
+    status: "cleared",
   },
   {
     id: "validation",
@@ -140,7 +140,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Immutable folds", "Long-form predictions", "Leakage tests", "Convergence log"],
     stopRule: "A split scaffold, mismatched B/D rows, or unresolved leakage defect invalidates the prediction artefact.",
-    status: "planned",
+    status: "cleared",
   },
   {
     id: "results",
@@ -157,7 +157,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Primary effect figure", "Calibration plots", "Error review", "Reproducible report"],
     stopRule: "No conclusion may outrun the interval, the locked 0.03 benchmark, or the drug-level study scope.",
-    status: "planned",
+    status: "next",
   },
 ];
 

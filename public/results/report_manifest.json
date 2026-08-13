@@ -1,0 +1,28 @@
+{
+  "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+  "research_summary_sha256": "985ab48cff8717c8d1cb512165ddd86a9456a4ff8e16c20e274148531f027e5f",
+  "research_report_sha256": "da3b78e7de9cfe196a55d70719972c0ba6a64636a79defdd27d3b26af1d4480a",
+  "site_data_sha256": "985ab48cff8717c8d1cb512165ddd86a9456a4ff8e16c20e274148531f027e5f",
+  "generated_files": {
+    "calibration.csv": "31e01021da72806faf30db7140b8ad7ba89f353bd2c30da3d5d3d5a385904ce0",
+    "cohort_scaffold_summary.csv": "05280fe3d8d2d97609d255f17cade96ca90dc6b896dd99800908da26b25b7160",
+    "important_false_negatives.csv": "8d881efb128b597bbad2af190c60971c83cf1959350c4f59851fa58f7792c2fc",
+    "kuhs_submission_protocol.md": "d844f70f3b7e5719a4e75407d0a0a18e9ff100255497faa1b8f54ca99725ffd8",
+    "kuhs_word_counts.json": "4aa237d12e5e25eb9eda66a16a80f73f8c40525fe7e74d7a69a8047af5018a86",
+    "model_metric_uncertainty.csv": "a382f405bb89e2239dd13de00c606899a6109e6db87b9c3b386f676f843451ed",
+    "model_performance.csv": "2aa663636511658e421c6e923a1a4fef9439c81a6630cf1094cf1e6f5af86e05",
+    "plain_language_summary.md": "15c4e7d2991dc1d277b7712a9a0ee3cd898f37bea473930d8324c824636f178c",
+    "precision_recall_curves.csv": "c9d1f71abf955393be4ed951a54d6dfb4874af78fc42d2f3b033b8868c73dc4f",
+    "presentation_outline.md": "0b6e0d15cb96745c26138d1601d41f74bf09414373bd2ce8addecb97651b61d4",
+    "primary_effect.svg": "3d3bd129259f4205f5499a39954d171f5305ce62a3aec7daae632dad2070167a",
+    "repeat_stability.csv": "a719b66f946aae06f352621acd5d8f373bf926bd2ee70c5c6dd0b84a622558bc",
+    "repeat_stability.svg": "8626ba4323d8ca99db1f8bb6f2ed18dbb3dece09094ab1030073af93bec4d625",
+    "research_report.md": "da3b78e7de9cfe196a55d70719972c0ba6a64636a79defdd27d3b26af1d4480a",
+    "research_summary.json": "985ab48cff8717c8d1cb512165ddd86a9456a4ff8e16c20e274148531f027e5f",
+    "roc_curves.csv": "40aacb2de06d869cae7408f6832054d47a519b7ef2708f7cd2cbe87f22a19105",
+    "sensitivity_analyses.csv": "fc63c30f6d3dd463dfdafc61848e67b5c739045c3be6b5bcd622aa7d8df3e3d3",
+    "study_flow.json": "6f760932162e222c2d8161f95ac5118e403e26e6635ee7dba2476afcca200be4",
+    "tripod_ai_applicability.md": "ff877f4060b3a9a52ae76ccab8e662b95fd5e681af3d70b6ce7fa711c8e96b5a",
+    "tripod_ai_checklist.csv": "39e2e3775fefe67180e2aa3d377951479959ae5e71eab2f1cabb37bf7e62f2f0"
+  }
+}
