@@ -35,6 +35,7 @@ FEATURE_PATHS = {
     "update_groups": Path("artifacts/folds/update_groups.csv"),
     "update_groups_summary": Path("artifacts/folds/update_groups.summary.json"),
     "precision_summary": Path("audit/qc/precision_simulation.summary.json"),
+    "precision_simulation": Path("audit/qc/precision_simulation.csv"),
     "precision_assessment": Path("audit/qc/precision_assessment.md"),
 }
 
@@ -60,20 +61,6 @@ def _ids(path: str | Path) -> list[str]:
         return arrays["drug_ids"].astype(str).tolist()
 
 
-def _approved_amendments() -> dict[str, str]:
-    paths = {
-        "PA-01": Path("audit/pilot/protocol-amendment-pa-01.md"),
-        "PA-02": Path("audit/protocol_lock/protocol-amendment-pa-02.md"),
-    }
-    hashes = {}
-    for label, path in paths.items():
-        text = path.read_text(encoding="utf-8")
-        if "Status: APPROVED" not in text:
-            raise RuntimeError(f"{label} is not approved; downstream execution is prohibited")
-        hashes[label] = sha256_file(path)
-    return hashes
-
-
 def _assert_complete_partition() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     full = pd.read_csv(FEATURE_PATHS["full_blind_input"])
     development = pd.read_csv(FEATURE_PATHS["development_folds"])
@@ -96,7 +83,7 @@ def _assert_complete_partition() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFra
 
 def create_feature_fold_lock(output_path: str | Path = G3_PATH) -> dict:
     protocol = require_protocol_lock()
-    amendments = _approved_amendments()
+    amendments = dict(protocol["approved_amendment_hashes"])
     missing = [str(path) for path in FEATURE_PATHS.values() if not path.exists()]
     if missing:
         raise FileNotFoundError(f"G3 inputs are missing: {missing}")
@@ -209,6 +196,8 @@ def require_feature_fold_lock(require_validator: bool = True) -> dict:
         raise RuntimeError("G3 was created against another protocol lock")
     if marker.get("config_bundle_sha256") != protocol["config_bundle_sha256"]:
         raise RuntimeError("G3 config lineage is stale")
+    if marker.get("amendment_hashes") != protocol["approved_amendment_hashes"]:
+        raise RuntimeError("G3 amendment lineage is stale")
     for name, path in FEATURE_PATHS.items():
         if marker["source_hashes"].get(name) != sha256_file(path):
             raise RuntimeError(f"G3 artifact drift detected: {name}")
