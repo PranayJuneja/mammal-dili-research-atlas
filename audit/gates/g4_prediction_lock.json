@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "gate": "G4",
+  "status": "LOCKED_AWAITING_INDEPENDENT_VALIDATION",
+  "created_at_utc": "2026-08-13T14:43:17.020080+00:00",
+  "implementation_revision": "08e3f4733b4d15a40e5ea98c2035ff45b14fb79a",
+  "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+  "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+  "prediction_contracts": {
+    "primary": {
+      "rows": 13500,
+      "drugs": 675,
+      "models": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "convergence_warnings": 0
+    },
+    "vmost_vs_vno": {
+      "rows": 3820,
+      "drugs": 382,
+      "models": [
+        "B",
+        "D"
+      ],
+      "convergence_warnings": 0
+    },
+    "stratified_random": {
+      "rows": 6750,
+      "drugs": 675,
+      "models": [
+        "B",
+        "D"
+      ],
+      "convergence_warnings": 0
+    },
+    "class_balanced": {
+      "rows": 6750,
+      "drugs": 675,
+      "models": [
+        "B",
+        "D"
+      ],
+      "convergence_warnings": 0
+    },
+    "update_transport": {
+      "rows": 536,
+      "drugs": 134,
+      "models": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "convergence_warnings": 0
+    }
+  },
+  "source_hashes": {
+    "artifacts\\predictions\\oof_predictions.csv": "a73753a2b816c4930558c882053e2a0a5a70c93bd80f7f9fdebcd26b8ec14d94",
+    "artifacts\\predictions\\oof_predictions.manifest.json": "5965ecb40d0c967e1bed8bd3da73c916ce857c438f16c24f3f77c657cb6935f1",
+    "artifacts\\predictions\\oof_predictions.tuning.json": "9577aa72d07f8440b00af9047cfa1de486c7c6581e1574750e8cf4a6c46a9dd1",
+    "artifacts\\predictions\\oof_predictions.folds.csv": "6f665bb95aa9de9992b2ba0ea95bb5d0d685fda114539858e9eecd57d513c644",
+    "artifacts\\predictions\\vmost_vno_oof_predictions.csv": "c18bf212905a04e6063e1c3158319855120c00af389249e158ea237ec1e8a125",
+    "artifacts\\predictions\\vmost_vno_oof_predictions.manifest.json": "df6da34a953f9a5effadcdbc44a6307ddb05ff58644c2975e70fe91b1db8041a",
+    "artifacts\\predictions\\vmost_vno_oof_predictions.tuning.json": "aa3410c50266c8df9f7781a7235e7d65f8947f28406af19c449e85c9e1716ddb",
+    "artifacts\\predictions\\vmost_vno_oof_predictions.folds.csv": "ab131090a8ea4204810590046d9af0e3ad60d8333d0e20670710a375b356595f",
+    "artifacts\\predictions\\random_split_oof_predictions.csv": "e8bff40df8707e850e6b4d993515eaa127fccdb66b386c4d423b4b1503cd604e",
+    "artifacts\\predictions\\random_split_oof_predictions.manifest.json": "707e29af15e44043b70d55fcbd2043605a1bf1de9e3347cdd848737aef594fa5",
+    "artifacts\\predictions\\random_split_oof_predictions.tuning.json": "26ac1c38f52e1764db7efc4d3cdf824193001ab1f36fef6152e877535a50aa41",
+    "artifacts\\predictions\\random_split_oof_predictions.folds.csv": "66bcf30b763c5746aa674b2dc44a9b49924f3ed0fbf0e91a5c1ea75258dd3e6d",
+    "artifacts\\predictions\\balanced_oof_predictions.csv": "56326542584dae679e680d5ab1058bc9eb11b4ff655750e1e340ca0666090fa2",
+    "artifacts\\predictions\\balanced_oof_predictions.manifest.json": "b9190161c21e5b8d655021c236a3eae0de0d10a21a89b69e80726608d63c5ce3",
+    "artifacts\\predictions\\balanced_oof_predictions.tuning.json": "879d5e13a31fad88dc632db8d33a2e479a6a381e017cf3aa338437b4f58b2be3",
+    "artifacts\\predictions\\balanced_oof_predictions.folds.csv": "6f665bb95aa9de9992b2ba0ea95bb5d0d685fda114539858e9eecd57d513c644",
+    "artifacts\\predictions\\update_predictions.csv": "06c5c481a5dd89653cf75c64c3842e90b63e07497fb2803fb3eed73eafaed71b",
+    "artifacts\\predictions\\update_predictions.manifest.json": "8d3e50596d6a8f57ea9f411d6078c72f5efe485e611e40e184943280324f45f4"
+  }
+}
