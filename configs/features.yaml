@@ -1,0 +1,17 @@
+schema_version: 1
+descriptors:
+  - MolWt
+  - MolLogP
+  - TPSA
+  - NumHDonors
+  - NumHAcceptors
+  - NumRotatableBonds
+  - RingCount
+  - FormalCharge
+  - FractionCSP3
+fingerprint:
+  type: Morgan
+  radius: 2
+  bits: 2048
+  chirality: true
+

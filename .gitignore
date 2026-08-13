@@ -1,0 +1,36 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# testing
+/coverage
+
+# environment and logs
+.env*
+!.env.example
+*.log
+.venv-chem/
+.venv-mammal/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.cache/
+vendor/
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+artifacts/**
+!artifacts/**/.gitkeep
+
+# local tooling
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

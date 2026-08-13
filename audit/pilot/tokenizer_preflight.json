@@ -1,0 +1,256 @@
+{
+  "passed": true,
+  "rows": 20,
+  "input_sha256": "de5812715d85b854d06f83c60c0a15156e950e63d841ea066ce29f87e2f28eaa",
+  "config_file_sha256": "7bc5298150239660494bedb328403264c70e1e5a9bc00c2ecb1184b965661b37",
+  "checkpoint_revision": "6d319d8dcf97f8821635327fc8cda24670553daa",
+  "prompt_prefix": "<@TOKENIZER-TYPE=SMILES><MOLECULAR_ENTITY><MOLECULAR_ENTITY_SMALL_MOLECULE><SEQUENCE_NATURAL_START>",
+  "prompt_suffix": "<SEQUENCE_NATURAL_END><EOS>",
+  "max_sequence_length": 2100,
+  "unknown_token_rule": "reject",
+  "tokenizer_loader_warnings": [],
+  "tokenizer_vocabulary_diagnostics": [
+    {
+      "file": "bpe_tokenizer_trained_on_chembl_zinc_with_aug_4272372_samples_balanced_1_1.json",
+      "model_type": "BPE",
+      "vocab_entries": 3309,
+      "minimum_id": 0,
+      "maximum_id": 3521,
+      "hole_count": 213,
+      "hole_ranges": [
+        [
+          314,
+          526
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    },
+    {
+      "file": "cell_attributes_tokenizer.json",
+      "model_type": "WordLevel",
+      "vocab_entries": 1103,
+      "minimum_id": 0,
+      "maximum_id": 4310,
+      "hole_count": 3208,
+      "hole_ranges": [
+        [
+          314,
+          3521
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    },
+    {
+      "file": "gene_tokenizer.json",
+      "model_type": "WordLevel",
+      "vocab_entries": 95218,
+      "minimum_id": 0,
+      "maximum_id": 99903,
+      "hole_count": 4686,
+      "hole_ranges": [
+        [
+          314,
+          4999
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    },
+    {
+      "file": "t5_tokenizer_AA_special.json",
+      "model_type": "WordLevel",
+      "vocab_entries": 340,
+      "minimum_id": 0,
+      "maximum_id": 526,
+      "hole_count": 187,
+      "hole_ranges": [
+        [
+          314,
+          500
+        ]
+      ],
+      "interpretation": "Non-contiguous reserved ID ranges; observed native loader emits OrderedVocab-hole warnings. IDs are preserved and hashed, not rewritten."
+    }
+  ],
+  "diagnostics": [
+    {
+      "drug_id": "PILOT-01",
+      "rdkit_valid": true,
+      "smiles_characters": 3,
+      "attended_tokens": 6,
+      "sequence_length": 6,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-02",
+      "rdkit_valid": true,
+      "smiles_characters": 21,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-03",
+      "rdkit_valid": true,
+      "smiles_characters": 17,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-04",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 9,
+      "sequence_length": 9,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-05",
+      "rdkit_valid": true,
+      "smiles_characters": 16,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-06",
+      "rdkit_valid": true,
+      "smiles_characters": 15,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-07",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-08",
+      "rdkit_valid": true,
+      "smiles_characters": 20,
+      "attended_tokens": 11,
+      "sequence_length": 11,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-09",
+      "rdkit_valid": true,
+      "smiles_characters": 11,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-10",
+      "rdkit_valid": true,
+      "smiles_characters": 11,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-11",
+      "rdkit_valid": true,
+      "smiles_characters": 6,
+      "attended_tokens": 9,
+      "sequence_length": 9,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-12",
+      "rdkit_valid": true,
+      "smiles_characters": 20,
+      "attended_tokens": 12,
+      "sequence_length": 12,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-13",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 7,
+      "sequence_length": 7,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-14",
+      "rdkit_valid": true,
+      "smiles_characters": 11,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-15",
+      "rdkit_valid": true,
+      "smiles_characters": 13,
+      "attended_tokens": 7,
+      "sequence_length": 7,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-16",
+      "rdkit_valid": true,
+      "smiles_characters": 7,
+      "attended_tokens": 6,
+      "sequence_length": 6,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-17",
+      "rdkit_valid": true,
+      "smiles_characters": 20,
+      "attended_tokens": 8,
+      "sequence_length": 8,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-18",
+      "rdkit_valid": true,
+      "smiles_characters": 23,
+      "attended_tokens": 11,
+      "sequence_length": 11,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-19",
+      "rdkit_valid": true,
+      "smiles_characters": 14,
+      "attended_tokens": 11,
+      "sequence_length": 11,
+      "unknown_token_count": 0,
+      "warnings": []
+    },
+    {
+      "drug_id": "PILOT-20",
+      "rdkit_valid": true,
+      "smiles_characters": 2324,
+      "attended_tokens": 1997,
+      "sequence_length": 1997,
+      "unknown_token_count": 0,
+      "warnings": []
+    }
+  ]
+}

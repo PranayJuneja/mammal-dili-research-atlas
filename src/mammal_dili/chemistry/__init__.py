@@ -1,0 +1,2 @@
+"""Conventional chemical representation."""
+

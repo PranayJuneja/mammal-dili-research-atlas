@@ -1,0 +1,53 @@
+item,applies_to,requirement,evidence_location,status
+1,D;E,Informative title,research_report.md title,Reported
+2,D;E,Structured abstract,TRIPOD+AI for Abstracts line audit,Pending
+3a,D;E,Context and rationale,research_report.md Research question,Reported
+3b,D;E,Target and intended purpose,research_report.md Scope statement,Reported
+3c,D;E,Known health inequalities,No human population or attributes,Not applicable
+4,D;E,Objectives,research_report.md Abstract and Research question,Reported
+5a,D;E,Data sources and rationale,Methods; source manifests; evidence ledger,Reported
+5b,D;E,Data dates,FDA release manifest and cohort audit,Reported
+6a,D;E,Setting and centres,Public drug records; no clinical centres,Not applicable
+6b,D;E,Eligibility criteria,Methods; cohort_audit.csv,Reported
+6c,D;E,Treatments received,No participants or treatment pathway,Not applicable
+7,D;E,Preparation and quality checks,Methods; curation and QC manifests,Reported
+8a,D;E,Outcome definition,Methods Cohort and outcome,Reported
+8b,D;E,Outcome assessor details,Verify upstream DILIrank assessor reporting,Pending
+8c,D;E,Outcome-assessment blinding,Verify upstream DILIrank assessor blinding,Pending
+9a,D,Initial predictor choice,Methods Representations; protocol,Reported
+9b,D;E,Predictor definitions,Feature manifests and configs/analysis.yaml,Reported
+9c,D;E,Predictor assessor details,Deterministic software measurements,Not applicable
+10,D;E,Study-size rationale,Precision assessment and study flow,Reported
+11,D;E,Missing-data handling,Methods; common-complete and fold-only imputation,Reported
+12a,D,Data partitioning,Methods Validation and analysis; fold summary,Reported
+12b,D,Predictor transformations,Analysis config and feature manifests,Reported
+12c,D,Model building and validation,Methods; prediction manifest,Reported
+12d,D;E,Cluster heterogeneity,"Chemical groups used for separation, not centres",Not applicable
+12e,D;E,Performance measures and plots,Methods; model tables and SVG companions,Reported
+12f,E,Updating after evaluation,Post-evaluation updating prohibited,Not applicable
+12g,E,Prediction calculation,REPRODUCING.md and prediction manifests,Reported
+13,D;E,Class-imbalance methods,Primary unweighted and locked balanced sensitivity,Reported
+14,D;E,Fairness approach,No person-level protected attributes; limitation stated,Not applicable
+15,D,Model output and thresholds,Probability outputs and fold-derived thresholds,Reported
+16,D;E,Development/evaluation differences,Development versus update cohort tables,Reported
+17,D;E,Ethics approval and consent,Private IEC record and approved amendments,Pending
+18a,D;E,Funding and funder role,Final author declaration,Pending
+18b,D;E,Conflicts and disclosures,Final author declaration,Pending
+18c,D;E,Protocol availability,docs/02; PA-01; PA-02; execution lock,Reported
+18d,D;E,Study registration,Final registration statement or identifier,Pending
+18e,D;E,Data availability,FDA/PubChem terms and final archive statement,Pending
+18f,D;E,Code availability,REPRODUCING.md; exact environment locks,Reported
+19,D;E,Patient/public involvement,Final no-involvement declaration,Pending
+20a,D;E,Record flow,study_flow.json and research_report.md Study flow,Reported
+20b,D;E,Data characteristics,Full predictor/missingness table by source,Pending
+20c,E,Evaluation/development comparison,Detailed update-distribution comparison,Pending
+21,D;E,Analysis sample/event counts,Per-analysis n and event-count table,Pending
+22,D,Full model specification,Code is available; fitted-model export,Pending
+23a,D;E,Performance with uncertainty,"Model table, primary CI, repeat companions",Reported
+23b,D;E,Performance heterogeneity by centres,No clinical centre clusters,Not applicable
+24,E,Updated-model results,No post-evaluation model updating,Not applicable
+25,D;E,Interpretation and fairness,research_report.md Interpretation,Reported
+26,D;E,Limitations and generalisability,research_report.md Limitations,Reported
+27a,D,Poor/unavailable implementation inputs,Not an implementation-ready clinical model,Not applicable
+27b,D,User interaction and expertise,No intended clinical users,Not applicable
+27c,D;E,Future evaluation,Limitations and final discussion,Reported

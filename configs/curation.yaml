@@ -1,0 +1,133 @@
+schema_version: 1
+outcome_include: ["vMost-DILI-concern", "vLess-DILI-concern", "vNo-DILI-concern"]
+positive_labels: ["vMost-DILI-concern", "vLess-DILI-concern"]
+negative_labels: ["vNo-DILI-concern"]
+parent_selection: "rdMolStandardize.FragmentParent"
+preserve_stereochemistry: true
+tautomer_canonicalization: false
+max_molecular_weight: 2000.0
+max_heavy_atoms: 160
+peptide_min_amide_bonds: 6
+peptide_min_molecular_weight: 700.0
+duplicate_policy: "retain-lowest-ltkbid-if-labels-agree-exclude-conflicts"
+review_fraction: 0.10
+exclusion_codes:
+  - AMBIGUOUS_OUTCOME
+  - BIOLOGIC_OR_MACROMOLECULE
+  - MIXTURE_OR_COMBINATION
+  - POLYMER_OR_UNRESOLVED_INORGANIC
+  - IDENTITY_UNRESOLVED
+  - STRUCTURE_UNAVAILABLE
+  - STRUCTURE_PARSE_FAILURE
+  - DUPLICATE_PARENT
+  - DUPLICATE_LABEL_CONFLICT
+  - MAMMAL_UNPROCESSABLE
+  - OTHER_PREDEFINED
+manual_exclusions:
+  LT00061: "POLYMER_OR_UNRESOLVED_INORGANIC: carboplatin requires intact platinum coordination; fragment parent discards Pt"
+  LT00805: "IDENTITY_UNRESOLVED: resin complex cannot be represented by the fallback phentermine parent"
+  LT00879: "POLYMER_OR_UNRESOLVED_INORGANIC: Yb-169 pentetate requires intact radiometal coordination"
+  LT00935: "POLYMER_OR_UNRESOLVED_INORGANIC: gadopentetate requires intact gadolinium coordination"
+  LT00952: "POLYMER_OR_UNRESOLVED_INORGANIC: gadoteridol requires intact gadolinium coordination"
+  LT01044: "POLYMER_OR_UNRESOLVED_INORGANIC: gadoversetamide requires intact gadolinium coordination"
+  LT01127: "POLYMER_OR_UNRESOLVED_INORGANIC: gadobenate requires intact gadolinium coordination"
+  LT01181: "POLYMER_OR_UNRESOLVED_INORGANIC: oxaliplatin requires intact platinum coordination"
+  LT00349: "BIOLOGIC_OR_MACROMOLECULE: protirelin is a tripeptide therapeutic"
+  LT00669: "BIOLOGIC_OR_MACROMOLECULE: romidepsin is a cyclic depsipeptide"
+  LT01125: "BIOLOGIC_OR_MACROMOLECULE: fondaparinux is a sulfated oligosaccharide rather than a small-molecule study unit"
+  LT01316: "BIOLOGIC_OR_MACROMOLECULE: epoetin alfa is a biologic and the PubChem record is not the therapeutic protein"
+  LT01426: "BIOLOGIC_OR_MACROMOLECULE: heparin sodium is a heterogeneous polysaccharide represented only by a fragment"
+  LT02002: "POLYMER_OR_UNRESOLVED_INORGANIC: cyanocobalamin requires intact cobalt coordination"
+  LT02166: "POLYMER_OR_UNRESOLVED_INORGANIC: auranofin requires intact gold coordination"
+  LT02395: "BIOLOGIC_OR_MACROMOLECULE: carfilzomib is a tetrapeptide epoxyketone"
+  LT02336: "POLYMER_OR_UNRESOLVED_INORGANIC: gadobutrol requires intact gadolinium coordination"
+  LT02330: "BIOLOGIC_OR_MACROMOLECULE: erythropoietin is the epoetin biologic and the PubChem small record is not the therapeutic protein"
+  LT02337: "POLYMER_OR_UNRESOLVED_INORGANIC: sodium bicarbonate has no carbon-containing small-molecule drug parent"
+  LT02404: "POLYMER_OR_UNRESOLVED_INORGANIC: gadoxetate requires intact gadolinium coordination"
+  LT02876: "POLYMER_OR_UNRESOLVED_INORGANIC: gadoterate requires intact gadolinium coordination"
+  LT03659: "BIOLOGIC_OR_MACROMOLECULE: difelikefalin is a peptide therapeutic"
+  LT03910: "BIOLOGIC_OR_MACROMOLECULE: gallium ga-68 gozetotide is a radiolabelled peptide"
+  LT00493: "POLYMER_OR_UNRESOLVED_INORGANIC: lanthanum carbonate requires the essential metal and has no organic active parent"
+  LT00528: "POLYMER_OR_UNRESOLVED_INORGANIC: gadofosveset requires intact gadolinium coordination"
+  LT00545: "MIXTURE_OR_COMBINATION: dimenhydrinate is a two-active-component complex"
+  LT01306: "BIOLOGIC_OR_MACROMOLECULE: interferon alfa-2b is a biologic"
+  LT00568: "MIXTURE_OR_COMBINATION: ivermectin is a multi-component avermectin mixture"
+  LT00358: "POLYMER_OR_UNRESOLVED_INORGANIC: sucralfate is a complex aluminium sucrose sulfate without one small-molecule parent"
+  LT01276: "BIOLOGIC_OR_MACROMOLECULE: benzylpenicilloyl polylysine is a macromolecular polylysine conjugate"
+  LT01291: "BIOLOGIC_OR_MACROMOLECULE: polymyxin B sulfate is a cyclic peptide mixture"
+  LT02056: "POLYMER_OR_UNRESOLVED_INORGANIC: dextromethorphan polistirex is an ion-exchange resin complex, excluded consistently with phentermine resin"
+  LT00881: "POLYMER_OR_UNRESOLVED_INORGANIC: colestipol is a cross-linked polymer not represented by one small fragment"
+  LT01858: "MIXTURE_OR_COMBINATION: tetrabamate is a multi-component carbamate combination"
+manual_parent_overrides:
+  LT00099:
+    name: "Fenoprofen"
+    pubchem_cid: 3342
+    formula: "C15H14O3"
+    isomeric_smiles: "CC(C1=CC(=CC=C1)OC2=CC=CC=C2)C(=O)O"
+    justification: "Calcium is the counterion; PubChem CID 3342 is the named active moiety."
+  LT00154:
+    name: "Theophylline"
+    pubchem_cid: 2153
+    formula: "C7H8N4O2"
+    isomeric_smiles: "CN1C2=C(C(=O)N(C1=O)C)NC=N2"
+    justification: "Sodium glycinate is the salt system; PubChem CID 2153 is the named active moiety."
+  LT00257:
+    name: "Iothalamic acid"
+    pubchem_cid: 3737
+    formula: "C11H9I3N2O4"
+    isomeric_smiles: "CC(=O)NC1=C(C(=C(C(=C1I)C(=O)O)I)C(=O)NC)I"
+    justification: "Meglumine is the counterion; PubChem CID 3737 is iothalamic acid."
+  LT00330:
+    name: "Lactic acid"
+    pubchem_cid: 612
+    formula: "C3H6O3"
+    isomeric_smiles: "CC(O)C(=O)O"
+    justification: "Sodium is the counterion; PubChem CID 612 is lactic acid, the neutral lactate parent."
+  LT00258:
+    name: "Atorvastatin"
+    pubchem_cid: 60823
+    formula: "C33H35FN2O5"
+    isomeric_smiles: "CC(C)C1=C(C(=C(N1CC[C@H](C[C@H](CC(=O)O)O)O)C2=CC=C(C=C2)F)C3=CC=CC=C3)C(=O)NC4=CC=CC=C4"
+    justification: "Calcium is the counterion; PubChem CID 60823 is the named active moiety."
+  LT00519:
+    name: "Bromfenac"
+    pubchem_cid: 60726
+    formula: "C15H12BrNO3"
+    isomeric_smiles: "C1=CC(=C(C(=C1)C(=O)C2=CC=C(C=C2)Br)N)CC(=O)O"
+    justification: "Sodium is the counterion; PubChem CID 60726 is the named active moiety."
+  LT00684:
+    name: "Valproic acid"
+    pubchem_cid: 3121
+    formula: "C8H16O2"
+    isomeric_smiles: "CCCC(CCC)C(=O)O"
+    justification: "Divalproex sodium supplies valproate; PubChem CID 3121 defines the active-moiety parent."
+  LT01141:
+    name: "Acamprosate"
+    pubchem_cid: 71158
+    formula: "C5H11NO4S"
+    isomeric_smiles: "CC(=O)NCCCS(=O)(=O)O"
+    justification: "Calcium is the counterion; PubChem CID 71158 is the named active moiety."
+  LT01398:
+    name: "Fosfomycin"
+    pubchem_cid: 446987
+    formula: "C3H7O4P"
+    isomeric_smiles: "C[C@H]1[C@H](O1)P(=O)(O)O"
+    justification: "Tromethamine is the counterion; PubChem CID 446987 is fosfomycin."
+  LT01713:
+    name: "Pyrantel"
+    pubchem_cid: 708857
+    formula: "C11H14N2S"
+    isomeric_smiles: "CN1CCCN=C1/C=C/C2=CC=CS2"
+    justification: "Pamoate is the counterion; PubChem CID 708857 is pyrantel."
+  LT01928:
+    name: "Rosuvastatin"
+    pubchem_cid: 446157
+    formula: "C22H28FN3O6S"
+    isomeric_smiles: "CC(C)C1=NC(=NC(=C1/C=C/[C@H](C[C@H](CC(=O)O)O)O)C2=CC=C(C=C2)F)N(C)S(=O)(=O)C"
+    justification: "Calcium is the counterion; PubChem CID 446157 is the named active moiety."
+  LT03576:
+    name: "Tafamidis"
+    pubchem_cid: 11001318
+    formula: "C14H7Cl2NO3"
+    isomeric_smiles: "C1=CC2=C(C=C1C(=O)O)OC(=N2)C3=CC(=CC(=C3)Cl)Cl"
+    justification: "Meglumine is the counterion; PubChem CID 11001318 is tafamidis."

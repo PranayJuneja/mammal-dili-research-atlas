@@ -10,7 +10,9 @@ This is a drug-level research benchmark. It is **not** a patient-risk calculator
 
 ## Current status
 
-**Planning and protocol-lock stage. No outcome modelling has started, and no result is implied.**
+**All gates G0-G5 have passed independent validation. The locked primary analysis found that adding the frozen MAMMAL representation reduced AUROC by 0.0804 (95% CI -0.1142 to -0.0420) relative to the conventional comparator. The result applies only to this checkpoint, representation recipe, cohort, learner and validation design; it is not a patient-risk estimate or clinical recommendation.**
+
+Open the completed Next.js research atlas locally with `pnpm dev`, or read the [full report](public/results/research_report.md), [final reporting addendum](public/results/final_reporting_addendum.md), and [G5 independent acceptance](audit/gates/g5-validator.md).
 
 The source drafts contained two competing primary designs. This documentation adopts the later, methodologically stronger design:
 
@@ -63,9 +65,9 @@ flowchart TD
     L --> M["Report with TRIPOD+AI and reproducibility archive"]
 ```
 
-## First executable milestone
+## Reproduce the study
 
-The first milestone is **not** training a classifier. It is obtaining the ethics determination and completing a label-blind feasibility pilot that proves the exact MAMMAL representation can be generated repeatably for at least 18 of 20 deliberately difficult molecules.
+The implementation now contains strict config schemas, audited cohort construction, exact environment locks, a checkpoint-native MAMMAL extractor, independently hash-bound G2/G3/G4 gates, nested validation, whole-scaffold uncertainty, robustness analyses, report generation, and the Next.js research atlas.
 
-Until the items in the [protocol-lock checklist](docs/15_PROTOCOL_LOCK_CHECKLIST.md) are resolved, all implementation choices remain provisional.
+Follow [REPRODUCING.md](REPRODUCING.md). The pipeline intentionally refuses accepted extraction until the two prospective amendments are fully approved and re-locked; it also refuses estimation until an independent reviewer accepts frozen predictions.
 

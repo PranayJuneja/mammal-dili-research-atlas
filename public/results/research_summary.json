@@ -1,0 +1,1135 @@
+{
+  "status": "complete",
+  "research_question": "Does adding one frozen MAMMAL molecular embedding improve drug-level DILI concern discrimination beyond descriptors and a Morgan fingerprint?",
+  "answer": "The expanded model performs worse under the locked procedure.",
+  "primary": {
+    "estimand": "mean repeat AUROC(D) - AUROC(B)",
+    "delta_auroc": -0.08041505349485874,
+    "ci95": [
+      -0.11421817722498152,
+      -0.041996801860668634
+    ],
+    "practical_gain_benchmark": 0.03,
+    "interpretation_region": "worse",
+    "interpretation": "The expanded model performs worse under the locked procedure.",
+    "repeat_deltas": [
+      -0.06672286749094547,
+      -0.08297947629157831,
+      -0.09362641022438711,
+      -0.09343907414345787,
+      -0.06530743932392491
+    ],
+    "bootstrap_successful_resamples": 2000
+  },
+  "models": {
+    "A": {
+      "auroc": 0.7249396361517007,
+      "pr_auroc": 0.8302024295055308,
+      "brier": 0.1800661570233218,
+      "sensitivity": 0.7078556263269639,
+      "specificity": 0.6058823529411764,
+      "precision": 0.8060385827300849,
+      "balanced_accuracy": 0.6568689896340703,
+      "calibration_intercept": 0.11021372747103997,
+      "calibration_slope": 0.8537743016325651
+    },
+    "B": {
+      "auroc": 0.7626326963906582,
+      "pr_auroc": 0.8506403812524077,
+      "brier": 0.16626968020482208,
+      "sensitivity": 0.7626326963906582,
+      "specificity": 0.6470588235294118,
+      "precision": 0.8336761386211758,
+      "balanced_accuracy": 0.7048457599600348,
+      "calibration_intercept": -0.027240378231673808,
+      "calibration_slope": 0.9435770470239502
+    },
+    "C": {
+      "auroc": 0.6606823196369843,
+      "pr_auroc": 0.7904335698727307,
+      "brier": 0.21923072370788552,
+      "sensitivity": 0.6509554140127388,
+      "specificity": 0.5892156862745098,
+      "precision": 0.7854540155349156,
+      "balanced_accuracy": 0.6200855501436243,
+      "calibration_intercept": 0.7016317246581834,
+      "calibration_slope": 0.7609169553584492
+    },
+    "D": {
+      "auroc": 0.6822176428957996,
+      "pr_auroc": 0.8015565976298941,
+      "brier": 0.19554695737773936,
+      "sensitivity": 0.6845010615711252,
+      "specificity": 0.5941176470588235,
+      "precision": 0.7958511179302624,
+      "balanced_accuracy": 0.6393093543149744,
+      "calibration_intercept": 0.390591259563341,
+      "calibration_slope": 0.5891939045491712
+    }
+  },
+  "model_repeat_uncertainty": {
+    "A": {
+      "auroc": {
+        "mean": 0.7249396361517007,
+        "repeat_sd": 0.0057307989301812485,
+        "repeat_min": 0.7172942425377795,
+        "repeat_max": 0.7333322925773282,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "pr_auroc": {
+        "mean": 0.8302024295055308,
+        "repeat_sd": 0.003948421517460529,
+        "repeat_min": 0.8252106527978931,
+        "repeat_max": 0.8348608931821238,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "brier": {
+        "mean": 0.1800661570233218,
+        "repeat_sd": 0.0012315979164552848,
+        "repeat_min": 0.17808428352606648,
+        "repeat_max": 0.18098539209393477,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "sensitivity": {
+        "mean": 0.7078556263269639,
+        "repeat_sd": 0.03899305510335229,
+        "repeat_min": 0.6560509554140127,
+        "repeat_max": 0.7600849256900213,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "specificity": {
+        "mean": 0.6058823529411764,
+        "repeat_sd": 0.040511673551753696,
+        "repeat_min": 0.5588235294117647,
+        "repeat_max": 0.6568627450980392,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "precision": {
+        "mean": 0.806038582730085,
+        "repeat_sd": 0.009470793612176285,
+        "repeat_min": 0.7967289719626168,
+        "repeat_max": 0.8170731707317073,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "balanced_accuracy": {
+        "mean": 0.6568689896340703,
+        "repeat_sd": 0.00970297596672042,
+        "repeat_min": 0.6478706132134382,
+        "repeat_max": 0.6718027975521419,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_intercept": {
+        "mean": 0.11021372747103997,
+        "repeat_sd": 0.03305270987258682,
+        "repeat_min": 0.08388012031911189,
+        "repeat_max": 0.15911288193686876,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_slope": {
+        "mean": 0.8537743016325651,
+        "repeat_sd": 0.033806441899548165,
+        "repeat_min": 0.8133174661795121,
+        "repeat_max": 0.9065417289003737,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      }
+    },
+    "B": {
+      "auroc": {
+        "mean": 0.7626326963906582,
+        "repeat_sd": 0.008926915597037094,
+        "repeat_min": 0.7512801298863494,
+        "repeat_max": 0.7723034011906249,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "pr_auroc": {
+        "mean": 0.8506403812524077,
+        "repeat_sd": 0.010874800153524284,
+        "repeat_min": 0.8343136267359271,
+        "repeat_max": 0.8631528827923198,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "brier": {
+        "mean": 0.16626968020482208,
+        "repeat_sd": 0.0019278933684595207,
+        "repeat_min": 0.16436208356880028,
+        "repeat_max": 0.16929484398621994,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "sensitivity": {
+        "mean": 0.7626326963906582,
+        "repeat_sd": 0.03391715591968728,
+        "repeat_min": 0.7197452229299363,
+        "repeat_max": 0.8046709129511678,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "specificity": {
+        "mean": 0.6470588235294118,
+        "repeat_sd": 0.05106045749019522,
+        "repeat_min": 0.5784313725490197,
+        "repeat_max": 0.696078431372549,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "precision": {
+        "mean": 0.8336761386211758,
+        "repeat_sd": 0.01399829029577797,
+        "repeat_min": 0.8150537634408602,
+        "repeat_max": 0.8453865336658354,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "balanced_accuracy": {
+        "mean": 0.704845759960035,
+        "repeat_sd": 0.010458634331512258,
+        "repeat_min": 0.6915511427500938,
+        "repeat_max": 0.7168883476957661,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_intercept": {
+        "mean": -0.02724037823167381,
+        "repeat_sd": 0.06144926783251466,
+        "repeat_min": -0.09532346719482697,
+        "repeat_max": 0.047966921558530044,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_slope": {
+        "mean": 0.9435770470239502,
+        "repeat_sd": 0.08036707719610951,
+        "repeat_min": 0.8389642365318262,
+        "repeat_max": 1.0459941889687003,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      }
+    },
+    "C": {
+      "auroc": {
+        "mean": 0.6606823196369843,
+        "repeat_sd": 0.007671469627635529,
+        "repeat_min": 0.6510136963490278,
+        "repeat_max": 0.6672182673494027,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "pr_auroc": {
+        "mean": 0.7904335698727306,
+        "repeat_sd": 0.005760358141821037,
+        "repeat_min": 0.7826607492251764,
+        "repeat_max": 0.7970424153900022,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "brier": {
+        "mean": 0.21923072370788552,
+        "repeat_sd": 0.0037196001247435076,
+        "repeat_min": 0.21272199581076018,
+        "repeat_max": 0.22169790428273178,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "sensitivity": {
+        "mean": 0.6509554140127388,
+        "repeat_sd": 0.050835846978942445,
+        "repeat_min": 0.5774946921443737,
+        "repeat_max": 0.692144373673036,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "specificity": {
+        "mean": 0.5892156862745098,
+        "repeat_sd": 0.03850458213069704,
+        "repeat_min": 0.5392156862745098,
+        "repeat_max": 0.6470588235294118,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "precision": {
+        "mean": 0.7854540155349156,
+        "repeat_sd": 0.007636368894038618,
+        "repeat_min": 0.7761904761904762,
+        "repeat_max": 0.7916666666666666,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "balanced_accuracy": {
+        "mean": 0.6200855501436243,
+        "repeat_sd": 0.012799296838152077,
+        "repeat_min": 0.6054858249032097,
+        "repeat_max": 0.6345541401273885,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_intercept": {
+        "mean": 0.7016317246581834,
+        "repeat_sd": 0.03814795083001896,
+        "repeat_min": 0.6402039387261896,
+        "repeat_max": 0.7381040460672218,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_slope": {
+        "mean": 0.7609169553584493,
+        "repeat_sd": 0.0998394406735622,
+        "repeat_min": 0.6391439659180482,
+        "repeat_max": 0.8995256114339473,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      }
+    },
+    "D": {
+      "auroc": {
+        "mean": 0.6822176428957996,
+        "repeat_sd": 0.015413187788484056,
+        "repeat_min": 0.6616918529619915,
+        "repeat_max": 0.7015007701594438,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "pr_auroc": {
+        "mean": 0.8015565976298941,
+        "repeat_sd": 0.011895326164755079,
+        "repeat_min": 0.7888965796002536,
+        "repeat_max": 0.8180650982818027,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "brier": {
+        "mean": 0.1955469573777394,
+        "repeat_sd": 0.00632545490182821,
+        "repeat_min": 0.18908715918413557,
+        "repeat_max": 0.20250705165687716,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "sensitivity": {
+        "mean": 0.6845010615711252,
+        "repeat_sd": 0.02367089381260082,
+        "repeat_min": 0.6666666666666666,
+        "repeat_max": 0.721868365180467,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "specificity": {
+        "mean": 0.5941176470588234,
+        "repeat_sd": 0.029083131321943775,
+        "repeat_min": 0.553921568627451,
+        "repeat_max": 0.6225490196078431,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "precision": {
+        "mean": 0.7958511179302624,
+        "repeat_sd": 0.0062592352286147115,
+        "repeat_min": 0.7888631090487239,
+        "repeat_max": 0.80306905370844,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "balanced_accuracy": {
+        "mean": 0.6393093543149744,
+        "repeat_sd": 0.004083098172134863,
+        "repeat_min": 0.6338984638441363,
+        "repeat_max": 0.6446078431372548,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_intercept": {
+        "mean": 0.390591259563341,
+        "repeat_sd": 0.11427756017243129,
+        "repeat_min": 0.270873903070611,
+        "repeat_max": 0.5366317108399934,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      },
+      "calibration_slope": {
+        "mean": 0.5891939045491712,
+        "repeat_sd": 0.16652466026494187,
+        "repeat_min": 0.3844145100592312,
+        "repeat_max": 0.7488216240362321,
+        "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+      }
+    }
+  },
+  "update_transport": {
+    "design": "untouched DILIrank 2.0 added-drug transport cohort",
+    "drugs": 134,
+    "models": {
+      "A": {
+        "auroc": 0.627020202020202,
+        "pr_auroc": 0.3953496096433422,
+        "brier": 0.40261084529704966,
+        "sensitivity": 0.8863636363636364,
+        "specificity": 0.32222222222222224,
+        "precision": 0.39,
+        "balanced_accuracy": 0.6042929292929293,
+        "calibration_intercept": -1.3251203188303242,
+        "calibration_slope": 0.4234675781911659
+      },
+      "B": {
+        "auroc": 0.6585858585858586,
+        "pr_auroc": 0.4590205864598621,
+        "brier": 0.40129842276584643,
+        "sensitivity": 0.9318181818181818,
+        "specificity": 0.24444444444444444,
+        "precision": 0.3761467889908257,
+        "balanced_accuracy": 0.5881313131313131,
+        "calibration_intercept": -1.5419319885700462,
+        "calibration_slope": 0.5135692422040492
+      },
+      "C": {
+        "auroc": 0.6659090909090909,
+        "pr_auroc": 0.42704032898033617,
+        "brier": 0.2528935109611843,
+        "sensitivity": 0.6590909090909091,
+        "specificity": 0.6444444444444445,
+        "precision": 0.47540983606557374,
+        "balanced_accuracy": 0.6517676767676768,
+        "calibration_intercept": -1.0123750381650547,
+        "calibration_slope": 1.1411714836938345
+      },
+      "D": {
+        "auroc": 0.6292929292929293,
+        "pr_auroc": 0.39292909899860273,
+        "brier": 0.3764518163462765,
+        "sensitivity": 0.8636363636363636,
+        "specificity": 0.3,
+        "precision": 0.37623762376237624,
+        "balanced_accuracy": 0.5818181818181818,
+        "calibration_intercept": -1.1906230422031534,
+        "calibration_slope": 0.3984183035361023
+      }
+    },
+    "paired_delta_auroc": {
+      "estimate": -0.02929292929292926,
+      "ci95": [
+        -0.10926688443135801,
+        0.046678747892178525
+      ],
+      "bootstrap_successful_resamples": 2000,
+      "interpretation": "Exploratory transport evidence; it does not replace the primary result."
+    },
+    "convergence": {
+      "warning_count": 0,
+      "fits_with_warnings": 0
+    },
+    "provenance": {
+      "bootstrap_seed": 120901,
+      "config_file_sha256": "5cc3a0102cb50acdc931ab82381e0a5721be4918e79a8b1503d4c3a317a2f2fd",
+      "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+      "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+      "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+      "prediction_sha256": "06c5c481a5dd89653cf75c64c3842e90b63e07497fb2803fb3eed73eafaed71b",
+      "prediction_manifest_sha256": "8d3e50596d6a8f57ea9f411d6078c72f5efe485e611e40e184943280324f45f4",
+      "implementation_revision": "f8b1270cabbb02e7c3528935fa5290a6482d1b6b"
+    }
+  },
+  "robustness": {
+    "vmost_vs_vno": {
+      "analysis_label": "pre-specified vMost-versus-vNo sensitivity analysis",
+      "primary": {
+        "estimand": "mean repeat AUROC(D) - AUROC(B)",
+        "delta_auroc": -0.07576007931262403,
+        "ci95": [
+          -0.11803816360612275,
+          -0.0401582545748089
+        ],
+        "practical_gain_benchmark": 0.03,
+        "interpretation_region": "worse",
+        "interpretation": "The expanded model performs worse under the locked procedure.",
+        "repeat_deltas": [
+          -0.09754351178673737,
+          -0.08325071601674394,
+          -0.053012778144965966,
+          -0.07124366600572796,
+          -0.07374972460894491
+        ],
+        "bootstrap_successful_resamples": 2000
+      },
+      "models": {
+        "B": {
+          "auroc": 0.7898270544172725,
+          "pr_auroc": 0.7333116565635833,
+          "brier": 0.18739391209872966,
+          "sensitivity": 0.69438202247191,
+          "specificity": 0.7558823529411764,
+          "precision": 0.7133418758355115,
+          "balanced_accuracy": 0.7251321877065433,
+          "calibration_intercept": -0.0652120233835511,
+          "calibration_slope": 0.8127734835693083
+        },
+        "D": {
+          "auroc": 0.7140669751046486,
+          "pr_auroc": 0.6644365548543023,
+          "brier": 0.23382056276748106,
+          "sensitivity": 0.6449438202247191,
+          "specificity": 0.6950980392156862,
+          "precision": 0.6498675070480049,
+          "balanced_accuracy": 0.6700209297202027,
+          "calibration_intercept": -0.1291112388849589,
+          "calibration_slope": 0.33007750866753105
+        }
+      },
+      "model_repeat_uncertainty": {
+        "B": {
+          "auroc": {
+            "mean": 0.7898270544172725,
+            "repeat_sd": 0.015796160627720546,
+            "repeat_min": 0.7644304912976427,
+            "repeat_max": 0.8035910993610929,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "pr_auroc": {
+            "mean": 0.7333116565635833,
+            "repeat_sd": 0.0349341598412779,
+            "repeat_min": 0.6748038787573897,
+            "repeat_max": 0.7611647884968038,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "brier": {
+            "mean": 0.18739391209872966,
+            "repeat_sd": 0.008052094154318805,
+            "repeat_min": 0.18068029581510267,
+            "repeat_max": 0.20023326920101778,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "sensitivity": {
+            "mean": 0.6943820224719102,
+            "repeat_sd": 0.042153553892818114,
+            "repeat_min": 0.6460674157303371,
+            "repeat_max": 0.7528089887640449,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "specificity": {
+            "mean": 0.7558823529411764,
+            "repeat_sd": 0.027599388745606353,
+            "repeat_min": 0.7205882352941176,
+            "repeat_max": 0.7892156862745098,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "precision": {
+            "mean": 0.7133418758355115,
+            "repeat_sd": 0.01571574780556847,
+            "repeat_min": 0.6902173913043478,
+            "repeat_max": 0.7329192546583851,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "balanced_accuracy": {
+            "mean": 0.7251321877065433,
+            "repeat_sd": 0.013730571060514816,
+            "repeat_min": 0.707837629433796,
+            "repeat_max": 0.7440515532055518,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_intercept": {
+            "mean": -0.0652120233835511,
+            "repeat_sd": 0.04524462009501097,
+            "repeat_min": -0.13277122003958813,
+            "repeat_max": -0.018611302311978654,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_slope": {
+            "mean": 0.8127734835693083,
+            "repeat_sd": 0.2031861035409532,
+            "repeat_min": 0.5988986953402952,
+            "repeat_max": 1.0962383315261348,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          }
+        },
+        "D": {
+          "auroc": {
+            "mean": 0.7140669751046484,
+            "repeat_sd": 0.02110353120026973,
+            "repeat_min": 0.6906807666886978,
+            "repeat_max": 0.7422890504516413,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "pr_auroc": {
+            "mean": 0.6644365548543023,
+            "repeat_sd": 0.026567908520339693,
+            "repeat_min": 0.6248535837363363,
+            "repeat_max": 0.6905397944402483,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "brier": {
+            "mean": 0.23382056276748106,
+            "repeat_sd": 0.010942481876811407,
+            "repeat_min": 0.22125256523012557,
+            "repeat_max": 0.24339485942327874,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "sensitivity": {
+            "mean": 0.6449438202247191,
+            "repeat_sd": 0.029029237489356863,
+            "repeat_min": 0.601123595505618,
+            "repeat_max": 0.6741573033707865,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "specificity": {
+            "mean": 0.6950980392156862,
+            "repeat_sd": 0.042649875949325886,
+            "repeat_min": 0.6519607843137255,
+            "repeat_max": 0.7549019607843137,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "precision": {
+            "mean": 0.6498675070480049,
+            "repeat_sd": 0.02725823149291257,
+            "repeat_min": 0.6229508196721312,
+            "repeat_max": 0.6815286624203821,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "balanced_accuracy": {
+            "mean": 0.6700209297202026,
+            "repeat_sd": 0.016709014988036026,
+            "repeat_min": 0.6511070720423,
+            "repeat_max": 0.6945637805684071,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_intercept": {
+            "mean": -0.12911123888495893,
+            "repeat_sd": 0.029228021740900015,
+            "repeat_min": -0.165204058867671,
+            "repeat_max": -0.08912448369016951,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_slope": {
+            "mean": 0.330077508667531,
+            "repeat_sd": 0.09116160112408264,
+            "repeat_min": 0.2255888311706161,
+            "repeat_max": 0.4394569736688752,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          }
+        }
+      },
+      "convergence": {
+        "warning_count": 0,
+        "fits_with_warnings": 0,
+        "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+      },
+      "provenance": {
+        "bootstrap_seed": 120900,
+        "classifier_seed": 120880,
+        "config_file_sha256": "5cc3a0102cb50acdc931ab82381e0a5721be4918e79a8b1503d4c3a317a2f2fd",
+        "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+        "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+        "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+        "prediction_sha256": "c18bf212905a04e6063e1c3158319855120c00af389249e158ea237ec1e8a125",
+        "prediction_manifest_sha256": "df6da34a953f9a5effadcdbc44a6307ddb05ff58644c2975e70fe91b1db8041a",
+        "implementation_revision": "f8b1270cabbb02e7c3528935fa5290a6482d1b6b"
+      },
+      "scope": "Drug-level DILIrank 2.0 concern classification; not patient-level risk or clinical validation."
+    },
+    "stratified_random": {
+      "analysis_label": "pre-specified optimistic stratified-random robustness analysis",
+      "primary": {
+        "estimand": "mean repeat AUROC(D) - AUROC(B)",
+        "delta_auroc": -0.06575704591815497,
+        "ci95": [
+          -0.09369597603344472,
+          -0.03577565436449559
+        ],
+        "practical_gain_benchmark": 0.03,
+        "interpretation_region": "worse",
+        "interpretation": "The expanded model performs worse under the locked procedure.",
+        "repeat_deltas": [
+          -0.05094500645268729,
+          -0.07363348736522213,
+          -0.04304566837350643,
+          -0.10657341492860417,
+          -0.05458765247075481
+        ],
+        "bootstrap_successful_resamples": 2000
+      },
+      "models": {
+        "B": {
+          "auroc": 0.7881187294450689,
+          "pr_auroc": 0.8630922027647449,
+          "brier": 0.1582840166598974,
+          "sensitivity": 0.7906581740976646,
+          "specificity": 0.6725490196078432,
+          "precision": 0.8482597035563557,
+          "balanced_accuracy": 0.7316035968527539,
+          "calibration_intercept": 0.09742770284421,
+          "calibration_slope": 0.8371809102453792
+        },
+        "D": {
+          "auroc": 0.7223616835269139,
+          "pr_auroc": 0.8201312281278901,
+          "brier": 0.18562646953725043,
+          "sensitivity": 0.7036093418259023,
+          "specificity": 0.6196078431372549,
+          "precision": 0.810888152446344,
+          "balanced_accuracy": 0.6616085924815786,
+          "calibration_intercept": 0.4027780271070176,
+          "calibration_slope": 0.4914304105289299
+        }
+      },
+      "model_repeat_uncertainty": {
+        "B": {
+          "auroc": {
+            "mean": 0.788118729445069,
+            "repeat_sd": 0.012405284643958497,
+            "repeat_min": 0.7697535489779777,
+            "repeat_max": 0.7988634944423629,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "pr_auroc": {
+            "mean": 0.8630922027647449,
+            "repeat_sd": 0.009607863810683643,
+            "repeat_min": 0.8466753226309132,
+            "repeat_max": 0.8710703595302318,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "brier": {
+            "mean": 0.1582840166598974,
+            "repeat_sd": 0.0070282630322297006,
+            "repeat_min": 0.15358938677759254,
+            "repeat_max": 0.16998898476113555,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "sensitivity": {
+            "mean": 0.7906581740976646,
+            "repeat_sd": 0.020617449488424987,
+            "repeat_min": 0.7643312101910829,
+            "repeat_max": 0.821656050955414,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "specificity": {
+            "mean": 0.6725490196078432,
+            "repeat_sd": 0.03973310613560678,
+            "repeat_min": 0.6323529411764706,
+            "repeat_max": 0.7205882352941176,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "precision": {
+            "mean": 0.8482597035563557,
+            "repeat_sd": 0.013266111274188488,
+            "repeat_min": 0.8337078651685393,
+            "repeat_max": 0.8633093525179856,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "balanced_accuracy": {
+            "mean": 0.7316035968527539,
+            "repeat_sd": 0.013285106399215861,
+            "repeat_min": 0.7124703384538529,
+            "repeat_max": 0.7457224928187836,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_intercept": {
+            "mean": 0.09742770284421,
+            "repeat_sd": 0.18307419320674012,
+            "repeat_min": -0.04717820102028279,
+            "repeat_max": 0.3261698598928875,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_slope": {
+            "mean": 0.8371809102453792,
+            "repeat_sd": 0.2541423951512262,
+            "repeat_min": 0.5154054846907979,
+            "repeat_max": 1.039634125989375,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          }
+        },
+        "D": {
+          "auroc": {
+            "mean": 0.7223616835269139,
+            "repeat_sd": 0.020532699069998807,
+            "repeat_min": 0.6922900795137588,
+            "repeat_max": 0.7445152158527955,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "pr_auroc": {
+            "mean": 0.8201312281278899,
+            "repeat_sd": 0.014558401312133346,
+            "repeat_min": 0.79579515888745,
+            "repeat_max": 0.833642360038074,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "brier": {
+            "mean": 0.18562646953725045,
+            "repeat_sd": 0.00873815813505503,
+            "repeat_min": 0.17522924963233133,
+            "repeat_max": 0.19707333519701745,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "sensitivity": {
+            "mean": 0.7036093418259023,
+            "repeat_sd": 0.03405641943913003,
+            "repeat_min": 0.6751592356687898,
+            "repeat_max": 0.7579617834394905,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "specificity": {
+            "mean": 0.6196078431372548,
+            "repeat_sd": 0.050301856989667854,
+            "repeat_min": 0.5343137254901961,
+            "repeat_max": 0.6617647058823529,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "precision": {
+            "mean": 0.8108881524463442,
+            "repeat_sd": 0.01231719871537886,
+            "repeat_min": 0.7898230088495575,
+            "repeat_max": 0.8217054263565892,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "balanced_accuracy": {
+            "mean": 0.6616085924815787,
+            "repeat_sd": 0.008931794625140361,
+            "repeat_min": 0.6461377544648432,
+            "repeat_max": 0.6684619707755713,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_intercept": {
+            "mean": 0.4027780271070175,
+            "repeat_sd": 0.07038608968244058,
+            "repeat_min": 0.2968756114405647,
+            "repeat_max": 0.4785596096976716,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_slope": {
+            "mean": 0.4914304105289299,
+            "repeat_sd": 0.12726951399676248,
+            "repeat_min": 0.36107747847078975,
+            "repeat_max": 0.6876659780944856,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          }
+        }
+      },
+      "convergence": {
+        "warning_count": 0,
+        "fits_with_warnings": 0,
+        "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+      },
+      "provenance": {
+        "bootstrap_seed": 120900,
+        "classifier_seed": 120880,
+        "config_file_sha256": "5cc3a0102cb50acdc931ab82381e0a5721be4918e79a8b1503d4c3a317a2f2fd",
+        "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+        "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+        "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+        "prediction_sha256": "e8bff40df8707e850e6b4d993515eaa127fccdb66b386c4d423b4b1503cd604e",
+        "prediction_manifest_sha256": "707e29af15e44043b70d55fcbd2043605a1bf1de9e3347cdd848737aef594fa5",
+        "implementation_revision": "f8b1270cabbb02e7c3528935fa5290a6482d1b6b"
+      },
+      "scope": "Drug-level DILIrank 2.0 concern classification; not patient-level risk or clinical validation."
+    },
+    "class_balanced": {
+      "analysis_label": "pre-specified class-balanced logistic-regression robustness analysis",
+      "primary": {
+        "estimand": "mean repeat AUROC(D) - AUROC(B)",
+        "delta_auroc": -0.07781732650597402,
+        "ci95": [
+          -0.11135856729603545,
+          -0.039209481774350984
+        ],
+        "practical_gain_benchmark": 0.03,
+        "interpretation_region": "worse",
+        "interpretation": "The expanded model performs worse under the locked procedure.",
+        "repeat_deltas": [
+          -0.0724574330793889,
+          -0.07001165646725782,
+          -0.08833936971816347,
+          -0.09395945214603896,
+          -0.06431872111902093
+        ],
+        "bootstrap_successful_resamples": 2000
+      },
+      "models": {
+        "B": {
+          "auroc": 0.760994546438533,
+          "pr_auroc": 0.8504816929728571,
+          "brier": 0.17801888176053388,
+          "sensitivity": 0.7503184713375797,
+          "specificity": 0.6411764705882353,
+          "precision": 0.8291489567478141,
+          "balanced_accuracy": 0.6957474709629075,
+          "calibration_intercept": 0.5369671025104663,
+          "calibration_slope": 0.9153841633470006
+        },
+        "D": {
+          "auroc": 0.683177219932559,
+          "pr_auroc": 0.8024734164874852,
+          "brier": 0.2141002518995337,
+          "sensitivity": 0.6662420382165605,
+          "specificity": 0.6176470588235294,
+          "precision": 0.800929678471445,
+          "balanced_accuracy": 0.6419445485200449,
+          "calibration_intercept": 0.6880382183570174,
+          "calibration_slope": 0.5632921814241252
+        }
+      },
+      "model_repeat_uncertainty": {
+        "B": {
+          "auroc": {
+            "mean": 0.760994546438533,
+            "repeat_sd": 0.008287285921035985,
+            "repeat_min": 0.7504058948420133,
+            "repeat_max": 0.7696494733774614,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "pr_auroc": {
+            "mean": 0.8504816929728569,
+            "repeat_sd": 0.011164445418811994,
+            "repeat_min": 0.8329740331426594,
+            "repeat_max": 0.8616909150691574,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "brier": {
+            "mean": 0.17801888176053388,
+            "repeat_sd": 0.001218009100776523,
+            "repeat_min": 0.17681974372646742,
+            "repeat_max": 0.18000902664549828,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "sensitivity": {
+            "mean": 0.7503184713375797,
+            "repeat_sd": 0.03979405242642316,
+            "repeat_min": 0.6985138004246284,
+            "repeat_max": 0.7898089171974523,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "specificity": {
+            "mean": 0.6411764705882352,
+            "repeat_sd": 0.0558264254019919,
+            "repeat_min": 0.553921568627451,
+            "repeat_max": 0.696078431372549,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "precision": {
+            "mean": 0.8291489567478141,
+            "repeat_sd": 0.015273192582897816,
+            "repeat_min": 0.8034557235421166,
+            "repeat_max": 0.8414322250639387,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "balanced_accuracy": {
+            "mean": 0.6957474709629075,
+            "repeat_sd": 0.01404453020112917,
+            "repeat_min": 0.6718652429124516,
+            "repeat_max": 0.7088797302360434,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_intercept": {
+            "mean": 0.5369671025104663,
+            "repeat_sd": 0.01580033684389407,
+            "repeat_min": 0.5117327574276913,
+            "repeat_max": 0.553283413613934,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_slope": {
+            "mean": 0.9153841633470003,
+            "repeat_sd": 0.08735855356129785,
+            "repeat_min": 0.800921446215563,
+            "repeat_max": 1.0071546783631216,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          }
+        },
+        "D": {
+          "auroc": {
+            "mean": 0.683177219932559,
+            "repeat_sd": 0.012860966469458565,
+            "repeat_min": 0.6663544398651179,
+            "repeat_max": 0.6971920402980725,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "pr_auroc": {
+            "mean": 0.8024734164874852,
+            "repeat_sd": 0.010677332081103025,
+            "repeat_min": 0.7918749507756898,
+            "repeat_max": 0.8168879707849108,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "brier": {
+            "mean": 0.2141002518995337,
+            "repeat_sd": 0.005823817726771963,
+            "repeat_min": 0.20775156085124452,
+            "repeat_max": 0.22110796980397296,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "sensitivity": {
+            "mean": 0.6662420382165605,
+            "repeat_sd": 0.02082411861611758,
+            "repeat_min": 0.6305732484076433,
+            "repeat_max": 0.6836518046709129,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "specificity": {
+            "mean": 0.6176470588235294,
+            "repeat_sd": 0.01733104855849384,
+            "repeat_min": 0.5980392156862745,
+            "repeat_max": 0.6421568627450981,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "precision": {
+            "mean": 0.800929678471445,
+            "repeat_sd": 0.006121269910703237,
+            "repeat_min": 0.7962466487935657,
+            "repeat_max": 0.8113695090439277,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "balanced_accuracy": {
+            "mean": 0.6419445485200449,
+            "repeat_sd": 0.009056963043175208,
+            "repeat_min": 0.6290121143999001,
+            "repeat_max": 0.6544117647058824,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_intercept": {
+            "mean": 0.6880382183570174,
+            "repeat_sd": 0.01974290220436403,
+            "repeat_min": 0.6633961799563445,
+            "repeat_max": 0.7088841021396884,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          },
+          "calibration_slope": {
+            "mean": 0.5632921814241251,
+            "repeat_sd": 0.1521593780293434,
+            "repeat_min": 0.3747467401043749,
+            "repeat_max": 0.7242960395209466,
+            "interpretation": "Descriptive variation across five repeated outer validations; not an independent-sample confidence interval."
+          }
+        }
+      },
+      "convergence": {
+        "warning_count": 0,
+        "fits_with_warnings": 0,
+        "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+      },
+      "provenance": {
+        "bootstrap_seed": 120900,
+        "classifier_seed": 120880,
+        "config_file_sha256": "5cc3a0102cb50acdc931ab82381e0a5721be4918e79a8b1503d4c3a317a2f2fd",
+        "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+        "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+        "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+        "prediction_sha256": "56326542584dae679e680d5ab1058bc9eb11b4ff655750e1e340ca0666090fa2",
+        "prediction_manifest_sha256": "b9190161c21e5b8d655021c236a3eae0de0d10a21a89b69e80726608d63c5ce3",
+        "implementation_revision": "f8b1270cabbb02e7c3528935fa5290a6482d1b6b"
+      },
+      "scope": "Drug-level DILIrank 2.0 concern classification; not patient-level risk or clinical validation."
+    }
+  },
+  "flow": {
+    "dilirank_records": 1336,
+    "non_ambiguous_records_considered": 982,
+    "eligible_drugs": 809,
+    "excluded_drugs": 173,
+    "development_drugs": 675,
+    "update_drugs": 134,
+    "scaffold_groups": 568,
+    "development_groups": 460,
+    "update_groups": 125,
+    "outcome_counts": {
+      "vLess-DILI-concern": 317,
+      "vNo-DILI-concern": 294,
+      "vMost-DILI-concern": 198
+    }
+  },
+  "important_false_negative_rows": 277,
+  "precision_diagnostics": {
+    "status": "COMPLETED_BEFORE_MODEL_PERFORMANCE_INSPECTION",
+    "seed": 120930,
+    "folds_sha256": "fbe97a896b88ac380e3e56921145d3f8bd1f98a4a07c88a963bc099f4c3d6e8b",
+    "observed_rows": 675,
+    "observed_groups": 460,
+    "observed_largest_group": 69,
+    "repeated_cv_prediction_sets": 5,
+    "scenarios": 16,
+    "coverage_experiments_per_scenario": 40,
+    "coverage_bootstrap_resamples": 100,
+    "locked_full_bootstrap_resamples": 2000,
+    "minimum_empirical_coverage": 0.825,
+    "maximum_mean_ci_width": 0.05474011978982642,
+    "maximum_endpoint_shift_100_to_2000": 0.007973629289142595,
+    "note": "Planning simulation only. It uses the observed group-size distribution and five paired prediction repeats but no empirical model predictions. Coverage screening uses 100 resamples across 40 experiments; every scenario also receives the locked 2,000-resample bootstrap to assess Monte Carlo endpoint stability. No analysis setting was changed."
+  },
+  "uncertainty_note": "Per-model uncertainty tables describe variation across five repeats; the primary inferential interval is the complete-scaffold paired bootstrap.",
+  "convergence": {
+    "primary": {
+      "warning_count": 0,
+      "fits_with_warnings": 0,
+      "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+    },
+    "robustness": {
+      "vmost_vs_vno": {
+        "warning_count": 0,
+        "fits_with_warnings": 0,
+        "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+      },
+      "stratified_random": {
+        "warning_count": 0,
+        "fits_with_warnings": 0,
+        "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+      },
+      "class_balanced": {
+        "warning_count": 0,
+        "fits_with_warnings": 0,
+        "disposition": "All convergence warnings are disclosed; no fit is silently removed."
+      }
+    },
+    "update": {
+      "warning_count": 0,
+      "fits_with_warnings": 0
+    }
+  },
+  "provenance": {
+    "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+    "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+    "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+    "g4_contracts": {
+      "primary": {
+        "rows": 13500,
+        "drugs": 675,
+        "models": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "convergence_warnings": 0
+      },
+      "vmost_vs_vno": {
+        "rows": 3820,
+        "drugs": 382,
+        "models": [
+          "B",
+          "D"
+        ],
+        "convergence_warnings": 0
+      },
+      "stratified_random": {
+        "rows": 6750,
+        "drugs": 675,
+        "models": [
+          "B",
+          "D"
+        ],
+        "convergence_warnings": 0
+      },
+      "class_balanced": {
+        "rows": 6750,
+        "drugs": 675,
+        "models": [
+          "B",
+          "D"
+        ],
+        "convergence_warnings": 0
+      },
+      "update_transport": {
+        "rows": 536,
+        "drugs": 134,
+        "models": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "convergence_warnings": 0
+      }
+    },
+    "primary_result": {
+      "bootstrap_seed": 120900,
+      "classifier_seed": 120880,
+      "config_file_sha256": "5cc3a0102cb50acdc931ab82381e0a5721be4918e79a8b1503d4c3a317a2f2fd",
+      "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
+      "g3_feature_lock_sha256": "583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff",
+      "g4_prediction_lock_sha256": "26908c6a723a1e912bd1d16184a39978eacc2b4d78d2ab5e7b2781ce5eb6791e",
+      "prediction_sha256": "a73753a2b816c4930558c882053e2a0a5a70c93bd80f7f9fdebcd26b8ec14d94",
+      "prediction_manifest_sha256": "5965ecb40d0c967e1bed8bd3da73c916ce857c438f16c24f3f77c657cb6935f1",
+      "implementation_revision": "f8b1270cabbb02e7c3528935fa5290a6482d1b6b"
+    }
+  },
+  "scope": "Drug-level DILIrank 2.0 concern classification; not patient-level risk or clinical validation.",
+  "source_hashes": {
+    "cohort": "5e20fa2de463a4863300f7272222f202f9237ecd2c10f16750f6e49c08530bae",
+    "folds": "fbe97a896b88ac380e3e56921145d3f8bd1f98a4a07c88a963bc099f4c3d6e8b",
+    "all_folds": "ac37c0aac977f26060ce1cd9d59edb26ef0aafd0697ee90ae9b894362a1a6639",
+    "update_groups": "bfeacd7ed74db5f51bfeab296707abd863ea7d1fe123ac372980b5bf0ba475e9",
+    "predictions": "a73753a2b816c4930558c882053e2a0a5a70c93bd80f7f9fdebcd26b8ec14d94",
+    "results": "2ed1caa1f50b26756f905e06ed53ce03e945015d8673d0bb8fce7ff472308fd4",
+    "update_results": "b9eecd28dca47a45dd1f8928f243aadcac8d670ed7d040160c8955cead885363",
+    "vmost_results": "5c98fd46a362dabfbcf0388eaee4be1055b2a18dc557794377ce12c86049444e",
+    "random_results": "79e75ab8f92d1bc8ea740e346f9b52f43d4a73495dade642efb8583609b91701",
+    "balanced_results": "0f3314d1209d83b9603a68c2a79e9b2a3b55e6e8b470e7695fda4fb7f4210fc2"
+  }
+}
