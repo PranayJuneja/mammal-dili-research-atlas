@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "status": "LOCKED_FOR_EXECUTION",
-  "locked_at_utc": "2026-08-13T13:19:19.349347+00:00",
+  "locked_at_utc": "2026-08-13T13:41:16.250496+00:00",
   "protocol_baseline_revision": "0b16bd9c903dfaf1088dca8ad198c351db7fa1b7",
-  "implementation_revision_at_lock": "bd98670b2d6afd3abc0840b86b68849fb0cb4c00",
+  "implementation_revision_at_lock": "6da81251e8ea0f26d750709ffd19df45a6cc65f0",
   "config_bundle_sha256": "6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6",
   "config_files": [
     "analysis.yaml",
@@ -18,7 +18,8 @@
   "governance_evidence_sha256": "578b47fb6607c19e7f8c84e83af2d811f4c71b205076159fbe259a23b55ea797",
   "approved_amendment_hashes": {
     "PA-01": "1c68ccf480b3d14da910e3e4f6a4267fc50fbcb39041d43c3ec4fb90b50bd773",
-    "PA-02": "ac1023e0d1a73ba3e226f1682a069a5c8e7997e68c47f78c944b903b19dcf7bf"
+    "PA-02": "ac1023e0d1a73ba3e226f1682a069a5c8e7997e68c47f78c944b903b19dcf7bf",
+    "PA-03": "3d568a21db5a3c6060eab906c59f888232665d2cdddd9cbd2f8b041c3c049d16"
   },
   "python": "3.12.13",
   "platform": "Windows-11-10.0.26200-SP0"
