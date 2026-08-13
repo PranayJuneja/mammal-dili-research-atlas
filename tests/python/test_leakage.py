@@ -7,6 +7,7 @@ from mammal_dili.io import sha256_file
 from mammal_dili.modelling import nested_cv
 from mammal_dili.modelling.nested_cv import (
     FeatureSet,
+    _held_out_update_ids,
     _pipeline,
     split_development_and_update,
     validation_group_vectors,
@@ -60,6 +61,33 @@ def test_update_cohort_never_enters_development_fit_object() -> None:
     assert update["drug_id"].tolist() == ["new-1"]
 
 
+def test_held_out_update_manifest_ids_come_from_full_features(tmp_path, monkeypatch) -> None:
+    update_groups = tmp_path / "update.csv"
+    pd.DataFrame({"drug_id": ["new-2", "new-1"]}).to_csv(update_groups, index=False)
+    monkeypatch.setitem(nested_cv.FEATURE_PATHS, "update_groups", update_groups)
+    development = pd.DataFrame({"drug_id": ["old-1", "old-2"]})
+    held_out = _held_out_update_ids(
+        development,
+        {"old-1", "old-2", "new-1", "new-2"},
+        {"old-1", "old-2", "new-1", "new-2"},
+        {"counts": {"update_rows": 2}},
+    )
+    assert held_out == ["new-1", "new-2"]
+
+
+def test_held_out_update_manifest_rejects_g3_mismatch(tmp_path, monkeypatch) -> None:
+    update_groups = tmp_path / "update.csv"
+    pd.DataFrame({"drug_id": ["new-1"]}).to_csv(update_groups, index=False)
+    monkeypatch.setitem(nested_cv.FEATURE_PATHS, "update_groups", update_groups)
+    with pytest.raises(AssertionError, match="G3 update population"):
+        _held_out_update_ids(
+            pd.DataFrame({"drug_id": ["old-1"]}),
+            {"old-1", "new-2"},
+            {"old-1", "new-2"},
+            {"counts": {"update_rows": 1}},
+        )
+
+
 def test_random_split_preserves_chemical_groups_for_bootstrap() -> None:
     frame = pd.DataFrame(
         {"drug_id": ["a", "b"], "scaffold_id": ["shared", "shared"]}
@@ -99,6 +127,8 @@ def test_nested_cv_passes_only_original_list_to_feature_loading(tmp_path, monkey
     ids = np.array([row["drug_id"] for row in rows])
     conventional = tmp_path / "conventional.npz"
     mammal = tmp_path / "mammal.npz"
+    update_groups = tmp_path / "update_groups.csv"
+    pd.DataFrame({"drug_id": ["new-never-fit"]}).to_csv(update_groups, index=False)
     np.savez_compressed(
         conventional,
         drug_ids=ids,
@@ -117,6 +147,7 @@ def test_nested_cv_passes_only_original_list_to_feature_loading(tmp_path, monkey
         nested_cv,
         "require_feature_fold_lock",
         lambda: {
+            "counts": {"update_rows": 1},
             "source_hashes": {
                 "development_folds": sha256_file(folds),
                 "conventional": sha256_file(conventional),
@@ -124,6 +155,7 @@ def test_nested_cv_passes_only_original_list_to_feature_loading(tmp_path, monkey
             }
         },
     )
+    monkeypatch.setitem(nested_cv.FEATURE_PATHS, "update_groups", update_groups)
     monkeypatch.setattr(nested_cv, "load_feature_set", stop_after_feature_load)
     with pytest.raises(RuntimeError, match="stop"):
         nested_cv.run_nested_cv(

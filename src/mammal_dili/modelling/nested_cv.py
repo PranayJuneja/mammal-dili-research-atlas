@@ -18,7 +18,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from mammal_dili.config import validate_config
-from mammal_dili.gates import G3_PATH, require_feature_fold_lock
+from mammal_dili.gates import FEATURE_PATHS, G3_PATH, require_feature_fold_lock
 from mammal_dili.io import sha256_file, write_json
 from mammal_dili.lock import require_protocol_lock
 
@@ -38,6 +38,25 @@ def split_development_and_update(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.
     if len(development) + len(update) != len(frame):
         raise AssertionError("Unrecognised release-group value")
     return development, update
+
+
+def _held_out_update_ids(
+    development_frame: pd.DataFrame,
+    conventional_ids: set[str],
+    mammal_ids: set[str],
+    g3: dict,
+) -> list[str]:
+    common_ids = conventional_ids & mammal_ids
+    development_ids = set(development_frame["drug_id"].astype(str))
+    held_out_ids = sorted(common_ids - development_ids)
+    expected_ids = sorted(
+        pd.read_csv(FEATURE_PATHS["update_groups"])["drug_id"].astype(str)
+    )
+    if held_out_ids != expected_ids:
+        raise AssertionError("Held-out feature IDs do not match the G3 update population")
+    if len(held_out_ids) != int(g3["counts"]["update_rows"]):
+        raise AssertionError("Held-out update count does not match G3")
+    return held_out_ids
 
 
 def validation_group_vectors(
@@ -211,7 +230,10 @@ def run_nested_cv(
     mammal_ids = set(np.load(mammal_path)["drug_ids"].astype(str))
     common = conventional_ids & mammal_ids
     frame = frame[frame["drug_id"].astype(str).isin(common)].copy().reset_index(drop=True)
-    development, update = split_development_and_update(frame)
+    development, _ = split_development_and_update(frame)
+    held_out_update_ids = _held_out_update_ids(
+        development, conventional_ids, mammal_ids, g3
+    )
     frame = development.reset_index(drop=True)
     if population == "vmost_vs_vno":
         frame = frame[
@@ -319,9 +341,9 @@ def run_nested_cv(
             "prediction_rows": len(result),
             "drugs": len(frame),
             "analysis_population": "eligible original-list development cohort",
-            "update_cohort_held_out_drugs": len(update),
+            "update_cohort_held_out_drugs": len(held_out_update_ids),
             "update_cohort_drug_ids_sha256": hashlib.sha256(
-                "\n".join(sorted(update["drug_id"].astype(str))).encode("utf-8")
+                "\n".join(held_out_update_ids).encode("utf-8")
             ).hexdigest(),
             "models": list(model_names),
             "population": population,

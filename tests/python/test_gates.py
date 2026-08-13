@@ -4,7 +4,10 @@ import pandas as pd
 import pytest
 
 from mammal_dili import gates
-from mammal_dili.gates import _validate_prediction_frame
+from mammal_dili.gates import (
+    _validate_held_out_update_manifest,
+    _validate_prediction_frame,
+)
 
 
 def _prediction_row(drug_id: str, model: str, repeat: int = 0) -> dict:
@@ -44,6 +47,26 @@ def test_prediction_gate_rejects_nonfinite_or_out_of_range_probability(tmp_path:
     pd.DataFrame(rows).to_csv(path, index=False)
     with pytest.raises(AssertionError, match="invalid"):
         _validate_prediction_frame(path, {"drug-1"}, {"B", "D"}, 1, "original-list")
+
+
+def test_update_id_hash_contract_is_order_independent() -> None:
+    import hashlib
+
+    ids = {"new-2", "new-1"}
+    digest = hashlib.sha256("\n".join(sorted(ids)).encode("utf-8")).hexdigest()
+    assert digest == hashlib.sha256(b"new-1\nnew-2").hexdigest()
+
+
+def test_g4_rejects_false_held_out_update_manifest() -> None:
+    with pytest.raises(AssertionError, match="held-out update provenance"):
+        _validate_held_out_update_manifest(
+            {
+                "update_cohort_held_out_drugs": 0,
+                "update_cohort_drug_ids_sha256": __import__("hashlib").sha256(b"").hexdigest(),
+            },
+            {"new-1", "new-2"},
+            "primary",
+        )
 
 
 def test_g3_requires_exact_current_amendment_map(tmp_path, monkeypatch) -> None:

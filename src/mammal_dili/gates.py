@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from datetime import UTC, datetime
@@ -247,6 +248,19 @@ def _validate_prediction_frame(
     }
 
 
+def _validate_held_out_update_manifest(
+    manifest: dict, update_ids: set[str], name: str
+) -> None:
+    expected_hash = hashlib.sha256(
+        "\n".join(sorted(update_ids)).encode("utf-8")
+    ).hexdigest()
+    if (
+        manifest.get("update_cohort_held_out_drugs") != len(update_ids)
+        or manifest.get("update_cohort_drug_ids_sha256") != expected_hash
+    ):
+        raise AssertionError(f"{name} held-out update provenance is incorrect")
+
+
 def create_prediction_lock(output_path: str | Path = G4_PATH) -> dict:
     require_feature_fold_lock()
     analysis_config = validate_config("configs/analysis.yaml")
@@ -305,6 +319,7 @@ def create_prediction_lock(output_path: str | Path = G4_PATH) -> dict:
                 or set(manifest.get("models", [])) != contracts[name][1]
             ):
                 raise AssertionError(f"{name} manifest settings violate the frozen contract")
+            _validate_held_out_update_manifest(manifest, update_ids, name)
             if manifest.get("folds_sha256") != sha256_file(FEATURE_PATHS["development_folds"]):
                 raise AssertionError(f"{name} does not use the G3 development folds")
             if manifest.get("conventional_features_sha256") != sha256_file(FEATURE_PATHS["conventional"]):
