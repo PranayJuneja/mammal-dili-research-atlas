@@ -13,6 +13,7 @@ CLEARANCE_PATH = Path("audit/governance/2026-08-12-user-reported-clearance.md")
 AMENDMENT_PATHS = {
     "PA-01": Path("audit/pilot/protocol-amendment-pa-01.md"),
     "PA-02": Path("audit/protocol_lock/protocol-amendment-pa-02.md"),
+    "PA-03": Path("audit/protocol_lock/protocol-amendment-pa-03.md"),
 }
 LOCKED_IMPLEMENTATION_PATHS = [
     "configs",

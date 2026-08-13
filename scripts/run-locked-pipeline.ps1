@@ -11,6 +11,7 @@ $ChemPython = Join-Path $ProjectRoot ".venv-chem\Scripts\python.exe"
 $MammalPython = Join-Path $ProjectRoot ".venv-mammal\Scripts\python.exe"
 $Pa01 = Join-Path $ProjectRoot "audit\pilot\protocol-amendment-pa-01.md"
 $Pa02 = Join-Path $ProjectRoot "audit\protocol_lock\protocol-amendment-pa-02.md"
+$Pa03 = Join-Path $ProjectRoot "audit\protocol_lock\protocol-amendment-pa-03.md"
 
 if (-not (Test-Path -LiteralPath $ChemPython)) { throw "Missing chemistry environment: $ChemPython" }
 if (-not (Test-Path -LiteralPath $MammalPython)) { throw "Missing MAMMAL environment: $MammalPython" }
@@ -27,7 +28,7 @@ function Invoke-Chem { param([string[]]$Arguments) Invoke-Checked $ChemPython $A
 function Invoke-Mammal { param([string[]]$Arguments) Invoke-Checked $MammalPython $Arguments }
 
 function Assert-Governance {
-    foreach ($amendment in @($Pa01, $Pa02)) {
+    foreach ($amendment in @($Pa01, $Pa02, $Pa03)) {
         if (-not (Test-Path -LiteralPath $amendment)) { throw "Missing amendment: $amendment" }
         if ((Get-Content -LiteralPath $amendment -Raw) -notmatch "Status: APPROVED") {
             throw "$(Split-Path -Leaf $amendment) is not approved; accepted execution is prohibited."
@@ -60,9 +61,7 @@ function Assert-G4Accepted {
 function Invoke-AcceptedPilot {
     Assert-Governance
     Assert-CleanWorktree
-    Invoke-Mammal @("-m", "mammal_dili", "extract-mammal", "--input", "audit/pilot/frozen_pilot_v2.csv", "--output", "artifacts/pilot/mammal_pilot_baseline.npz")
-    Invoke-Mammal @("-m", "mammal_dili", "extract-mammal", "--input", "audit/pilot/frozen_pilot_v2.csv", "--output", "artifacts/pilot/mammal_pilot_same_order.npz")
-    Invoke-Mammal @("-m", "mammal_dili", "extract-mammal", "--input", "audit/pilot/frozen_pilot_v2.csv", "--output", "artifacts/pilot/mammal_pilot_reordered.npz", "--reverse-order")
+    # PA-03 permits validation-only reuse of the six immutable artifacts. Never rerun here.
     Invoke-Chem @("-m", "mammal_dili", "validate-pilot")
 }
 

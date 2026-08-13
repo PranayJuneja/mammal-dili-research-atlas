@@ -9,6 +9,11 @@ def test_orchestrator_checks_every_native_exit_and_separates_gates() -> None:
     assert "Assert-PilotAccepted" in script
     assert "Assert-G3Accepted" in script
     assert "Assert-G4Accepted" in script
+    pilot_body = script.split("function Invoke-AcceptedPilot", 1)[1].split(
+        "function Invoke-FeaturesAndFreezeG3", 1
+    )[0]
+    assert '"extract-mammal"' not in pilot_body
+    assert "$Pa03" in script
     model_body = script.split("function Invoke-PredictionsAndFreezeG4", 1)[1].split(
         "function Invoke-FreezeG4", 1
     )[0]

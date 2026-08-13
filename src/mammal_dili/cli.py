@@ -157,12 +157,17 @@ def main() -> None:
             )
         )
     elif args.command == "validate-pilot":
+        from mammal_dili.lock import require_protocol_lock
+
+        lock = require_protocol_lock()
         report = validate_pilot(
             "artifacts/pilot/mammal_pilot_baseline.npz",
             "artifacts/pilot/mammal_pilot_same_order.npz",
             "artifacts/pilot/mammal_pilot_reordered.npz",
             "configs/mammal_embedding.yaml",
             "artifacts/pilot/pilot_report.json",
+            require_pa03_frozen_artifacts=True,
+            validation_implementation_revision=lock["implementation_revision_at_lock"],
         )
         print(json.dumps(report, indent=2))
         if not report["passed"]:

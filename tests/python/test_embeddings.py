@@ -4,6 +4,8 @@ import pytest
 
 from mammal_dili.embeddings import mammal
 from mammal_dili.embeddings.mammal import (
+    _canonicalize_manifest_file_map,
+    _snapshot_relative_posix,
     make_prompt,
     prepare_full_blind_input,
     validate_full_extraction,
@@ -25,6 +27,40 @@ def test_prompt_contract_is_byte_explicit() -> None:
         "<MOLECULAR_ENTITY_SMALL_MOLECULE><SEQUENCE_NATURAL_START>"
         "CCO<SEQUENCE_NATURAL_END><EOS>"
     )
+
+
+def test_manifest_paths_write_posix_and_accept_legacy_windows_separator(tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    target = snapshot / "tokenizer" / "config.yaml"
+    assert _snapshot_relative_posix(target, snapshot) == "tokenizer/config.yaml"
+    result = _canonicalize_manifest_file_map(
+        {r"tokenizer\config.yaml": {"sha256": "same"}}, "tokenizer_files"
+    )
+    assert result == {"tokenizer/config.yaml": {"sha256": "same"}}
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        r"C:\\snapshot\\tokenizer\\config.yaml",
+        r"\\\\server\\share\\config.yaml",
+        "/snapshot/tokenizer/config.yaml",
+        "tokenizer/../config.yaml",
+        "tokenizer/./config.yaml",
+        "tokenizer//config.yaml",
+    ],
+)
+def test_manifest_path_canonicalization_rejects_unsafe_paths(key) -> None:
+    with pytest.raises(AssertionError, match="unsafe path"):
+        _canonicalize_manifest_file_map({key: {}}, "tokenizer_files")
+
+
+def test_manifest_path_canonicalization_rejects_collision() -> None:
+    with pytest.raises(AssertionError, match="collision"):
+        _canonicalize_manifest_file_map(
+            {"tokenizer/config.yaml": {}, r"tokenizer\config.yaml": {}},
+            "tokenizer_files",
+        )
 
 
 def test_full_mammal_input_is_label_blind_and_eligible_only(tmp_path) -> None:

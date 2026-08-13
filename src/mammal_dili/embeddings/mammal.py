@@ -9,7 +9,7 @@ import subprocess
 import time
 import warnings
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from uuid import uuid4
 
 import numpy as np
@@ -17,6 +17,85 @@ import pandas as pd
 
 from mammal_dili.config import validate_config
 from mammal_dili.io import sha256_file, sha256_json, write_json
+
+PA03_FROZEN_PILOT_ARTIFACTS = {
+    "mammal_pilot_baseline.npz": {
+        "sha256": "28984f63fb19c200671095b3838926aac1a20d74e606a57a493ca776c4f34de3",
+        "bytes": 57746,
+    },
+    "mammal_pilot_baseline.manifest.json": {
+        "sha256": "874b8d6fe364823028570d21b21cd996aec2f85a603142a4447e416d80e696dd",
+        "bytes": 16360,
+    },
+    "mammal_pilot_same_order.npz": {
+        "sha256": "28984f63fb19c200671095b3838926aac1a20d74e606a57a493ca776c4f34de3",
+        "bytes": 57746,
+    },
+    "mammal_pilot_same_order.manifest.json": {
+        "sha256": "6dd06e130771b071533bc1523541206f861b3a8bbb9566a36be348536932952d",
+        "bytes": 16360,
+    },
+    "mammal_pilot_reordered.npz": {
+        "sha256": "9eff4e485b946c9fe52e743d3b295e78077b7cb13dffdfb8b172cdf99326b683",
+        "bytes": 57746,
+    },
+    "mammal_pilot_reordered.manifest.json": {
+        "sha256": "a74c98cdf298033752b8c42a96f9da4baa773ebfa4b1da3e56015974f96c7beb",
+        "bytes": 16357,
+    },
+}
+PA03_EXTRACTION_REVISION = "f6c35939f23ac27fa30c028589ef71888d316a26"
+
+
+def _snapshot_relative_posix(path: Path, snapshot: Path) -> str:
+    return path.relative_to(snapshot).as_posix()
+
+
+def _canonicalize_manifest_file_map(value: object, field: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise TypeError(f"Manifest {field} must be an object")
+    canonical: dict[str, object] = {}
+    for raw_key, metadata in value.items():
+        if not isinstance(raw_key, str) or not raw_key:
+            raise AssertionError(f"Manifest {field} contains an empty or non-string path")
+        windows_path = PureWindowsPath(raw_key)
+        normalized = raw_key.replace("\\", "/")
+        posix_path = PurePosixPath(normalized)
+        parts = normalized.split("/")
+        if (
+            windows_path.is_absolute()
+            or bool(windows_path.drive)
+            or posix_path.is_absolute()
+            or any(part in {"", ".", ".."} for part in parts)
+        ):
+            raise AssertionError(f"Manifest {field} contains an unsafe path: {raw_key!r}")
+        key = "/".join(parts)
+        if key in canonical:
+            raise AssertionError(f"Manifest {field} path normalization collision: {key}")
+        canonical[key] = metadata
+    return canonical
+
+
+def _verify_pa03_frozen_pilot_artifacts(paths: list[str | Path]) -> dict[str, dict]:
+    artifacts: dict[str, Path] = {}
+    for value in paths:
+        target = Path(value)
+        for path in (target, target.with_suffix(".manifest.json")):
+            if path.name in artifacts:
+                raise AssertionError(f"Duplicate frozen pilot artifact: {path.name}")
+            artifacts[path.name] = path
+    if set(artifacts) != set(PA03_FROZEN_PILOT_ARTIFACTS):
+        raise AssertionError("PA-03 frozen pilot artifact names do not match the approved bundle")
+    verified: dict[str, dict] = {}
+    for name, expected in PA03_FROZEN_PILOT_ARTIFACTS.items():
+        path = artifacts[name]
+        if not path.is_file():
+            raise AssertionError(f"Missing PA-03 frozen pilot artifact: {path}")
+        actual = {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+        if actual != expected:
+            raise AssertionError(f"PA-03 frozen pilot artifact changed: {name}")
+        verified[name] = actual
+    return verified
 
 
 def make_prompt(smiles: str, config: dict) -> str:
@@ -416,12 +495,15 @@ def extract_embeddings(
             "checkpoint_revision": config["checkpoint_revision"],
             "checkpoint_snapshot": str(snapshot),
             "model_files": {
-                str(path.relative_to(snapshot)): {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+                _snapshot_relative_posix(path, snapshot): {
+                    "sha256": sha256_file(path),
+                    "bytes": path.stat().st_size,
+                }
                 for path in model_files
             },
             "model_total_bytes": sum(path.stat().st_size for path in model_files),
             "tokenizer_files": {
-                str(path.relative_to(snapshot)): {
+                _snapshot_relative_posix(path, snapshot): {
                     "sha256": sha256_file(path),
                     "bytes": path.stat().st_size,
                 }
@@ -520,6 +602,12 @@ def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[objec
         raise AssertionError(f"Missing extraction manifest: {manifest_path}")
     run = np.load(target)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["model_files"] = _canonicalize_manifest_file_map(
+        manifest.get("model_files"), "model_files"
+    )
+    manifest["tokenizer_files"] = _canonicalize_manifest_file_map(
+        manifest.get("tokenizer_files"), "tokenizer_files"
+    )
     ids = run["drug_ids"].astype(str).tolist()
     token_counts = run["token_counts"].tolist()
     embeddings = run["embeddings"]
@@ -581,12 +669,37 @@ def validate_pilot(
     reordered_path: str | Path,
     config_path: str | Path,
     report_path: str | Path,
+    *,
+    require_pa03_frozen_artifacts: bool = False,
+    validation_implementation_revision: str | None = None,
 ) -> dict:
+    frozen_artifacts = None
+    if require_pa03_frozen_artifacts:
+        frozen_artifacts = _verify_pa03_frozen_pilot_artifacts(
+            [baseline_path, same_order_path, reordered_path]
+        )
+        if not validation_implementation_revision:
+            raise AssertionError("PA-03 validation implementation revision is required")
     config = validate_config(config_path)
     baseline, baseline_manifest = _load_and_validate_run(baseline_path, "input_order")
     same_order, same_manifest = _load_and_validate_run(same_order_path, "input_order")
     reordered, reordered_manifest = _load_and_validate_run(reordered_path, "reversed")
     manifests = [baseline_manifest, same_manifest, reordered_manifest]
+    if require_pa03_frozen_artifacts and any(
+        manifest["implementation_revision"] != PA03_EXTRACTION_REVISION
+        for manifest in manifests
+    ):
+        raise AssertionError("Frozen pilot extraction revision does not match PA-03")
+    if require_pa03_frozen_artifacts:
+        expected_input = Path("audit/pilot/frozen_pilot_v2.csv")
+        if not expected_input.is_file():
+            raise AssertionError("PA-03 frozen pilot input is missing")
+        if any(manifest["input_sha256"] != sha256_file(expected_input) for manifest in manifests):
+            raise AssertionError("Frozen pilot input hash does not match PA-03 manifests")
+        if any(manifest["config_file_sha256"] != sha256_file(config_path) for manifest in manifests):
+            raise AssertionError("Current embedding config does not match PA-03 manifests")
+        if any(manifest["validated_config_sha256"] != sha256_json(config) for manifest in manifests):
+            raise AssertionError("Validated embedding config does not match PA-03 manifests")
     invariant_fields = [
         "input_sha256",
         "config_file_sha256",
@@ -648,6 +761,10 @@ def validate_pilot(
             "started_at_utc": [manifest["started_at_utc"] for manifest in manifests],
         },
         "manifest_invariants_verified": invariant_fields,
+        "pa03_validation_only_reuse": require_pa03_frozen_artifacts,
+        "frozen_artifacts": frozen_artifacts,
+        "extraction_implementation_revision": manifests[0]["implementation_revision"],
+        "validation_implementation_revision": validation_implementation_revision,
     }
     write_json(report_path, report)
     return report
