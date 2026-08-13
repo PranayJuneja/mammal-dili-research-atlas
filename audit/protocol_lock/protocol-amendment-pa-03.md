@@ -2,7 +2,7 @@
 
 Date proposed: 2026-08-13 (Asia/Calcutta)
 
-Status: PROPOSED — G2 acceptance and all downstream execution remain prohibited
+Status: APPROVED — G2 acceptance and all downstream execution remain prohibited pending implementation, clean relock, independent lock review, and corrected validation
 
 ## Trigger and scope
 
@@ -93,11 +93,11 @@ defect was found, diagnosed, or specified.
 |---|---|---|
 | Project owner acknowledgement | Confirmed 2026-08-13 | Direct owner confirmation is bound to corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`. |
 | Faculty guide approval | Confirmed 2026-08-13 | Project owner reports private faculty-guide approval of corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`; identifying evidence remains restricted. |
-| Independent technical/scientific approval | Pending independent validator verdict | Verify defect, immutable hashes, normalization contract, tests, and no scientific change. |
+| Independent technical/scientific approval | Confirmed 2026-08-13 | Independent PASS is recorded in `audit/governance/pa-03-independent-review.md`, bound to corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`. |
 | IEC notification/approval disposition | Approved 2026-08-13 | Project owner reports private IEC approval of corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`; identifying evidence remains restricted. |
 
-G2 acceptance remains prohibited while any row is pending. After all approvals are
-complete, PA-03 must be marked `APPROVED`; the narrow implementation and tests must be
+All required approvals are complete. The narrow implementation and tests must be
 committed; PA-03 must be added to execution-lock and pipeline governance enforcement;
 and a new clean execution lock must be generated and independently validated before
-validation-only reuse of the frozen artifacts.
+validation-only reuse of the frozen artifacts. G2 acceptance and every downstream
+execution stage remain prohibited until corrected validation independently passes.
