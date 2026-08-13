@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "gate": "G3",
+  "status": "LOCKED_AWAITING_INDEPENDENT_VALIDATION",
+  "created_at_utc": "2026-08-13T14:02:42.020090+00:00",
+  "implementation_revision": "d1dd27c68be8f0e86c0101c6583e764202ead6dd",
+  "protocol_lock_sha256": "79ff95a5ff8ee34475f6e2278151ea236f23e208713cec862536d0ac0514116b",
+  "config_bundle_sha256": "6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6",
+  "validated_config_sha256": "6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6",
+  "amendment_hashes": {
+    "PA-01": "1c68ccf480b3d14da910e3e4f6a4267fc50fbcb39041d43c3ec4fb90b50bd773",
+    "PA-02": "ac1023e0d1a73ba3e226f1682a069a5c8e7997e68c47f78c944b903b19dcf7bf",
+    "PA-03": "3d568a21db5a3c6060eab906c59f888232665d2cdddd9cbd2f8b041c3c049d16"
+  },
+  "counts": {
+    "full_feature_rows": 809,
+    "development_rows": 675,
+    "development_groups": 460,
+    "update_rows": 134,
+    "update_groups": 125
+  },
+  "source_hashes": {
+    "cohort": "5e20fa2de463a4863300f7272222f202f9237ecd2c10f16750f6e49c08530bae",
+    "full_blind_input": "68b919de90d8470d0ed7967ec47020d027d9f904b20582508b1b0b2a2ebe5a2d",
+    "verification_sample": "de1aad6d23c0f5991204d9c58b9184b0c385ce99ff9738bbfcee40ac2a74ebf5",
+    "conventional": "63f414c5dc40a470dc7e11da9cc520d3dd7a85e7df3a64150dd8c30dd972c5b1",
+    "conventional_manifest": "9ff380d969a53c842dfd63cc2529089a9c79af22ae709cdea373295fd2833f39",
+    "mammal": "69f7abf8c88855b11abc7e04a143e163fd530ee047244ce14c6745268dc8492c",
+    "mammal_manifest": "961e06672d05a1411c94812b1ea4634019ed25aaf8c3bcaff48104e9e00276f3",
+    "mammal_verification_repeat": "14685b3722592b103cfdb3693a0d99759232c4653dce096a6e4ab8f7965f35d7",
+    "mammal_verification_repeat_manifest": "a040e80b004b830cf63158f9246353fc547309e52632dcbd054db2800421ea79",
+    "full_embedding_validation": "a8e2f81226ab84e6bd3a7f77989b7c2998c58f03d4b89b83fdbe6c346936aa61",
+    "all_cohort_folds": "ac37c0aac977f26060ce1cd9d59edb26ef0aafd0697ee90ae9b894362a1a6639",
+    "all_cohort_folds_summary": "609ac55c6fd5a4bbc274a50e2a5c3555d77725c5903202e9661e5324deb13b7f",
+    "development_folds": "fbe97a896b88ac380e3e56921145d3f8bd1f98a4a07c88a963bc099f4c3d6e8b",
+    "development_folds_summary": "42799a353853427f6faac58cb51eb79d0699eddd10bffb051f8c0ac15a19b412",
+    "update_groups": "bfeacd7ed74db5f51bfeab296707abd863ea7d1fe123ac372980b5bf0ba475e9",
+    "update_groups_summary": "a9a9b3e5e72a8c1016911adc376785295a7d09bbef91c2b31c331bcddd1fa803",
+    "precision_summary": "d7ae110aa2813e31c5456a5a96174cfa0325df1e83fdbcee097f8787c821e336",
+    "precision_simulation": "d6835f76be29e7d9843ff92894c69ea5b39b0acb3db852a73b70edacc4a97bd1",
+    "precision_assessment": "8be1a7387a25249f638ced5dbc76ecac3fb3540e4da48284c698bdf8ab6417ce"
+  },
+  "ordered_feature_ids_sha256": "55b0bdd8c2ad3234c920696de2f6f37eed912fe56dd01fb7f20c26a4d92572fd",
+  "precision_diagnostics": {
+    "minimum_empirical_coverage": 0.825,
+    "maximum_mean_ci_width": 0.05474011978982642,
+    "maximum_endpoint_shift_100_to_2000": 0.007973629289142595
+  }
+}
