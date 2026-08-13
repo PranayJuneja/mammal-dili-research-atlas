@@ -15,7 +15,7 @@ authorize another extraction.
 
 The frozen artifacts and their pre-amendment hashes are recorded in
 `audit/pilot/g2-path-serialization-failure.md`. They were generated at extraction
-revision `f6c3593d9d43349061146730809c31ac4d31ed91` and remain immutable.
+revision `f6c35939f23ac27fa30c028589ef71888d316a26` and remain immutable.
 
 ## Amended implementation contract
 
@@ -41,7 +41,7 @@ After PA-03 approval, implementation, clean commit, relock, and independent lock
 review, the corrected validator may read the existing three artifacts only after
 verifying all six exact hashes in the failure record. It must separately record:
 
-- extraction implementation revision `f6c3593d9d43349061146730809c31ac4d31ed91`;
+- extraction implementation revision `f6c35939f23ac27fa30c028589ef71888d316a26`;
 - validation implementation revision from the new execution lock; and
 - the immutable NPZ and manifest hashes used for the verdict.
 
@@ -91,10 +91,10 @@ defect was found, diagnosed, or specified.
 
 | Role/action | Status | Evidence boundary |
 |---|---|---|
-| Project owner acknowledgement | Confirmed 2026-08-13 | Direct owner confirmation is bound to substantive PA-03 SHA-256 `1ec939366936f664a2730156bdee6b8869f1b667edc8113257919797a6b3a0de`. |
-| Faculty guide approval | Pending explicit private confirmation | Retain identifying evidence only in the restricted governance record. |
+| Project owner acknowledgement | Confirmed 2026-08-13 | Direct owner confirmation is bound to corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`. |
+| Faculty guide approval | Confirmed 2026-08-13 | Project owner reports private faculty-guide approval of corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`; identifying evidence remains restricted. |
 | Independent technical/scientific approval | Pending independent validator verdict | Verify defect, immutable hashes, normalization contract, tests, and no scientific change. |
-| IEC notification/approval disposition | Pending explicit post-proposal confirmation | Record `approved`, `notified`, or `not required by determination` with date and exact PA-03 hash. |
+| IEC notification/approval disposition | Approved 2026-08-13 | Project owner reports private IEC approval of corrected substantive PA-03 SHA-256 `81160c139e8da36c1e1c5b7040cc05a97e4acd303bc91bf76047359eb9ae5230`; identifying evidence remains restricted. |
 
 G2 acceptance remains prohibited while any row is pending. After all approvals are
 complete, PA-03 must be marked `APPROVED`; the narrow implementation and tests must be

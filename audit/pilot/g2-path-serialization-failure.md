@@ -32,7 +32,7 @@ reuse after verifying these exact SHA-256 values before reading the artifacts.
 | `mammal_pilot_reordered.manifest.json` | `a74c98cdf298033752b8c42a96f9da4baa773ebfa4b1da3e56015974f96c7beb` | 16,357 |
 
 All three manifests record extraction implementation revision
-`f6c3593d9d43349061146730809c31ac4d31ed91` and distinct processes, UUIDs, and
+`f6c35939f23ac27fa30c028589ef71888d316a26` and distinct processes, UUIDs, and
 timezone-aware timestamps.
 
 ## Outcome-blind diagnostic boundary
