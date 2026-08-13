@@ -13,8 +13,11 @@ manifest generation from the already filtered 675-row development fold file.
 
 G3 reserves 134 update drugs. Their sorted, newline-delimited ID SHA-256 is
 `8ddd245694516063bdca95c8040cfdc7d421aa3e0748d504de5f5e4ca899fdb8`.
-No AUROC, performance estimate, bootstrap interval, model comparison, update result,
-report, or conclusion was calculated or inspected before withdrawal.
+Prespecified inner-fold AUROC tuning scores were necessarily generated during the
+completed nested-CV calculations, but they were not inspected and did not identify or
+shape this metadata correction. No outer performance estimate, paired model
+comparison, bootstrap interval, update-cohort performance result, report, or
+conclusion was calculated or inspected before withdrawal.
 
 The prospective correction derives held-out IDs as the common-complete feature IDs
 minus the full 675-drug development population before any sensitivity-population

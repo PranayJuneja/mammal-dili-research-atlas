@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -86,6 +88,30 @@ def test_held_out_update_manifest_rejects_g3_mismatch(tmp_path, monkeypatch) -> 
             {"old-1", "new-2"},
             {"counts": {"update_rows": 1}},
         )
+
+
+def test_held_out_update_pre_tuning_read_is_id_only(tmp_path, monkeypatch) -> None:
+    update_groups = tmp_path / "update.csv"
+    pd.DataFrame({"drug_id": ["new-1"], "outcome": [1]}).to_csv(update_groups, index=False)
+    monkeypatch.setitem(nested_cv.FEATURE_PATHS, "update_groups", update_groups)
+    original_read_csv = pd.read_csv
+    observed_usecols = []
+
+    def guarded_read_csv(path, *args, **kwargs):
+        if Path(path) == update_groups:
+            observed_usecols.append(kwargs.get("usecols"))
+            if kwargs.get("usecols") != ["drug_id"]:
+                raise AssertionError("Update outcomes were available before tuning")
+        return original_read_csv(path, *args, **kwargs)
+
+    monkeypatch.setattr(pd, "read_csv", guarded_read_csv)
+    assert _held_out_update_ids(
+        pd.DataFrame({"drug_id": ["old-1"]}),
+        {"old-1", "new-1"},
+        {"old-1", "new-1"},
+        {"counts": {"update_rows": 1}},
+    ) == ["new-1"]
+    assert observed_usecols == [["drug_id"]]
 
 
 def test_random_split_preserves_chemical_groups_for_bootstrap() -> None:

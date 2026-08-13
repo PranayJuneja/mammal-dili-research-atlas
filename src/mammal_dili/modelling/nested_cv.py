@@ -50,7 +50,7 @@ def _held_out_update_ids(
     development_ids = set(development_frame["drug_id"].astype(str))
     held_out_ids = sorted(common_ids - development_ids)
     expected_ids = sorted(
-        pd.read_csv(FEATURE_PATHS["update_groups"])["drug_id"].astype(str)
+        pd.read_csv(FEATURE_PATHS["update_groups"], usecols=["drug_id"])["drug_id"].astype(str)
     )
     if held_out_ids != expected_ids:
         raise AssertionError("Held-out feature IDs do not match the G3 update population")
