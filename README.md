@@ -10,7 +10,9 @@ This is a drug-level research benchmark. It is **not** a patient-risk calculator
 
 ## Current status
 
-**Technical/design validation has passed. Outcome execution remains correctly paused until PA-01 and PA-02 receive dated faculty-guide and IEC disposition confirmation. No predictive result has been generated or implied.**
+**All gates G0-G5 have passed independent validation. The locked primary analysis found that adding the frozen MAMMAL representation reduced AUROC by 0.0804 (95% CI -0.1142 to -0.0420) relative to the conventional comparator. The result applies only to this checkpoint, representation recipe, cohort, learner and validation design; it is not a patient-risk estimate or clinical recommendation.**
+
+Open the completed Next.js research atlas locally with `pnpm dev`, or read the [full report](public/results/research_report.md), [final reporting addendum](public/results/final_reporting_addendum.md), and [G5 independent acceptance](audit/gates/g5-validator.md).
 
 The source drafts contained two competing primary designs. This documentation adopts the later, methodologically stronger design:
 
