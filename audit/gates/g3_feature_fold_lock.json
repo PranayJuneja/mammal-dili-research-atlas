@@ -2,9 +2,9 @@
   "schema_version": 1,
   "gate": "G3",
   "status": "LOCKED_AWAITING_INDEPENDENT_VALIDATION",
-  "created_at_utc": "2026-08-13T14:02:42.020090+00:00",
-  "implementation_revision": "d1dd27c68be8f0e86c0101c6583e764202ead6dd",
-  "protocol_lock_sha256": "79ff95a5ff8ee34475f6e2278151ea236f23e208713cec862536d0ac0514116b",
+  "created_at_utc": "2026-08-13T14:27:24.017992+00:00",
+  "implementation_revision": "a2fe6e5da188eb0f1033dc8e088437c85adf942f",
+  "protocol_lock_sha256": "058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf",
   "config_bundle_sha256": "6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6",
   "validated_config_sha256": "6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6",
   "amendment_hashes": {

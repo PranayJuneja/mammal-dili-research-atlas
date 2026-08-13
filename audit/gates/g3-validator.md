@@ -4,7 +4,7 @@ Date: 2026-08-13 (Asia/Calcutta)
 
 Status: PASS
 
-Gate lock SHA-256: b10eed352cca35751c5ff695c3b53ba59db20274dbeb28e3c8a13cae3784b4f3
+Gate lock SHA-256: 583ba6e319575b39fc1ebfb12d2b923be3d8895c18a8c2aa03e5ae090c2e09ff
 
 ## Review boundary
 
@@ -12,7 +12,9 @@ This independent review covers the frozen cohort, conventional and MAMMAL featur
 
 ## Lock and source lineage
 
-The G3 candidate was generated at implementation revision `d1dd27c68be8f0e86c0101c6583e764202ead6dd` against protocol-lock SHA-256 `79ff95a5ff8ee34475f6e2278151ea236f23e208713cec862536d0ac0514116b` and configuration-bundle SHA-256 `6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6`.
+The G3 candidate was rebound at implementation revision `a2fe6e5da188eb0f1033dc8e088437c85adf942f` against protocol-lock SHA-256 `058cc8082872fd27a98884cf6d8411d6ed7232a0b5197d5377d8e52879a04cdf` and configuration-bundle SHA-256 `6e3495e8c311e0db3dee467d45c95fe3d74229a06931de9882515e09434c50f6`.
+
+This was a lineage-only rebind after the outcome-blind G4 manifest-provenance correction. Relative to the previously accepted G3 lock, only the creation timestamp, implementation revision, and protocol-lock SHA-256 changed. No cohort, conventional feature, MAMMAL extraction, verification repeat, grouping, fold, or precision artifact was regenerated. Counts, all 19 scientific source hashes, the ordered-ID digest, precision diagnostics, configuration hashes, and amendment hashes remain exactly unchanged.
 
 Its amendment map exactly matches the active protocol lock:
 
