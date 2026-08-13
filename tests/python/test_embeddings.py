@@ -6,6 +6,8 @@ from mammal_dili.embeddings import mammal
 from mammal_dili.embeddings.mammal import (
     _canonicalize_manifest_file_map,
     _snapshot_relative_posix,
+    _validate_pa03_lineage,
+    _verify_manifest_snapshot_files,
     make_prompt,
     prepare_full_blind_input,
     validate_full_extraction,
@@ -63,6 +65,75 @@ def test_manifest_path_canonicalization_rejects_collision() -> None:
         )
 
 
+def test_snapshot_verification_rejects_tokenizer_config_omission(tmp_path) -> None:
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    model = snapshot / "model.safetensors"
+    model.write_bytes(b"model")
+    manifest = {
+        "checkpoint_snapshot": str(snapshot),
+        "model_total_bytes": 5,
+        "model_files": {
+            "model.safetensors": {"sha256": sha256_file(model), "bytes": 5}
+        },
+        "tokenizer_files": {},
+    }
+    with pytest.raises(AssertionError, match="config.yaml"):
+        _verify_manifest_snapshot_files(manifest)
+
+
+def test_pa03_frozen_hash_refusal_occurs_before_npz_loading(tmp_path, monkeypatch) -> None:
+    paths = []
+    expected = {}
+    for stem in ("mammal_pilot_baseline", "mammal_pilot_same_order", "mammal_pilot_reordered"):
+        npz = tmp_path / f"{stem}.npz"
+        manifest = tmp_path / f"{stem}.manifest.json"
+        npz.write_bytes(b"frozen")
+        manifest.write_bytes(b"{}")
+        paths.append(npz)
+        for path in (npz, manifest):
+            expected[path.name] = {
+                "sha256": sha256_file(path),
+                "bytes": path.stat().st_size,
+            }
+    monkeypatch.setattr(mammal, "PA03_FROZEN_PILOT_ARTIFACTS", expected)
+    paths[0].write_bytes(b"tampered")
+    called = False
+
+    def forbidden_load(*_args, **_kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("Extraction loader must not be called")
+
+    monkeypatch.setattr(mammal, "_load_and_validate_run", forbidden_load)
+    with pytest.raises(AssertionError, match="artifact changed"):
+        validate_pilot(
+            paths[0],
+            paths[1],
+            paths[2],
+            tmp_path / "unread-config.yaml",
+            tmp_path / "unwritten-report.json",
+            require_pa03_frozen_artifacts=True,
+            validation_implementation_revision="validation-revision",
+        )
+    assert called is False
+
+
+def test_pa03_lineage_rejects_extraction_revision_and_records_validation_revision() -> None:
+    with pytest.raises(AssertionError, match="extraction revision"):
+        _validate_pa03_lineage(
+            [{"implementation_revision": "wrong"}], "validation-revision"
+        )
+    lineage = _validate_pa03_lineage(
+        [{"implementation_revision": mammal.PA03_EXTRACTION_REVISION}],
+        "validation-revision",
+    )
+    assert lineage == {
+        "extraction_implementation_revision": mammal.PA03_EXTRACTION_REVISION,
+        "validation_implementation_revision": "validation-revision",
+    }
+
+
 def test_full_mammal_input_is_label_blind_and_eligible_only(tmp_path) -> None:
     cohort = tmp_path / "cohort.csv"
     output = tmp_path / "blind.csv"
@@ -92,6 +163,12 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
     same = tmp_path / "same.npz"
     reversed_run = tmp_path / "reversed.npz"
     token_counts = np.full(20, 6, dtype=np.int32)
+    snapshot = tmp_path / "snapshot"
+    tokenizer = snapshot / "tokenizer" / "config.yaml"
+    tokenizer.parent.mkdir(parents=True)
+    model = snapshot / "model.safetensors"
+    tokenizer.write_bytes(b"tokenizer")
+    model.write_bytes(b"model")
     np.savez_compressed(baseline, drug_ids=ids, embeddings=vectors, token_counts=token_counts)
     np.savez_compressed(same, drug_ids=ids, embeddings=vectors.copy(), token_counts=token_counts)
     np.savez_compressed(
@@ -108,8 +185,19 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
         "implementation_revision": "analysis-code",
         "checkpoint": "checkpoint",
         "checkpoint_revision": "revision",
-        "model_files": {"model.safetensors": {"sha256": "model"}},
-        "tokenizer_files": {"tokenizer/config.yaml": {"sha256": "tokenizer"}},
+        "checkpoint_snapshot": str(snapshot),
+        "model_total_bytes": 5,
+        "model_files": {
+            "model.safetensors": {"sha256": sha256_file(model), "bytes": 5}
+        },
+        "tokenizer_files": {
+            "tokenizer/config.yaml": {
+                "sha256": sha256_file(tokenizer),
+                "bytes": 9,
+            }
+        },
+        "tokenizer_loader_warnings": [],
+        "tokenizer_revision": "revision",
         "prompt_prefix": "prefix",
         "prompt_suffix": "suffix",
         "hidden_state": "state",
@@ -146,7 +234,6 @@ def test_pilot_validation_separates_process_and_order_checks(tmp_path) -> None:
                 "requested_drug_ids": ids.tolist(),
                 "successful_drug_ids": run_ids.tolist(),
                 "failures": [],
-                "tokenizer_loader_warnings": [],
                 "token_diagnostics": [
                     {
                         "drug_id": drug_id,

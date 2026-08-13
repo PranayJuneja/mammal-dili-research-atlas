@@ -98,6 +98,49 @@ def _verify_pa03_frozen_pilot_artifacts(paths: list[str | Path]) -> dict[str, di
     return verified
 
 
+def _verify_manifest_snapshot_files(manifest: dict) -> None:
+    snapshot_value = manifest.get("checkpoint_snapshot")
+    if not isinstance(snapshot_value, str) or not snapshot_value:
+        raise AssertionError("Manifest checkpoint snapshot is missing")
+    snapshot = Path(snapshot_value)
+    if not snapshot.is_dir():
+        raise AssertionError(f"Pinned checkpoint snapshot is unavailable: {snapshot}")
+    verified_bytes: dict[str, int] = {}
+    for field in ("model_files", "tokenizer_files"):
+        records = manifest[field]
+        verified_bytes[field] = 0
+        for key, expected in records.items():
+            if not isinstance(expected, dict) or set(expected) != {"sha256", "bytes"}:
+                raise AssertionError(f"Manifest {field} metadata is incomplete: {key}")
+            path = snapshot.joinpath(*PurePosixPath(key).parts)
+            if not path.is_file():
+                raise AssertionError(f"Pinned snapshot file is missing: {key}")
+            actual = {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+            if actual != expected:
+                raise AssertionError(f"Pinned snapshot file changed: {key}")
+            verified_bytes[field] += actual["bytes"]
+    if manifest.get("model_total_bytes") != verified_bytes["model_files"]:
+        raise AssertionError("Manifest model byte total does not match pinned snapshot")
+    if "tokenizer/config.yaml" not in manifest["tokenizer_files"]:
+        raise AssertionError("Tokenizer manifest omits tokenizer/config.yaml")
+
+
+def _validate_pa03_lineage(
+    manifests: list[dict], validation_implementation_revision: str | None
+) -> dict[str, str]:
+    if not validation_implementation_revision:
+        raise AssertionError("PA-03 validation implementation revision is required")
+    if any(
+        manifest["implementation_revision"] != PA03_EXTRACTION_REVISION
+        for manifest in manifests
+    ):
+        raise AssertionError("Frozen pilot extraction revision does not match PA-03")
+    return {
+        "extraction_implementation_revision": PA03_EXTRACTION_REVISION,
+        "validation_implementation_revision": validation_implementation_revision,
+    }
+
+
 def make_prompt(smiles: str, config: dict) -> str:
     return f"{config['prompt_prefix']}{smiles}{config['prompt_suffix']}"
 
@@ -600,7 +643,6 @@ def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[objec
     manifest_path = target.with_suffix(".manifest.json")
     if not manifest_path.exists():
         raise AssertionError(f"Missing extraction manifest: {manifest_path}")
-    run = np.load(target)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["model_files"] = _canonicalize_manifest_file_map(
         manifest.get("model_files"), "model_files"
@@ -608,6 +650,8 @@ def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[objec
     manifest["tokenizer_files"] = _canonicalize_manifest_file_map(
         manifest.get("tokenizer_files"), "tokenizer_files"
     )
+    _verify_manifest_snapshot_files(manifest)
+    run = np.load(target)
     ids = run["drug_ids"].astype(str).tolist()
     token_counts = run["token_counts"].tolist()
     embeddings = run["embeddings"]
@@ -632,8 +676,6 @@ def _load_and_validate_run(path: str | Path, expected_order: str) -> tuple[objec
         raise AssertionError("A drug is recorded as both successful and failed")
     if set(ids) | set(failure_ids) != set(requested_ids):
         raise AssertionError("Successful and failed IDs do not partition requested IDs")
-    if "tokenizer/config.yaml" not in manifest["tokenizer_files"]:
-        raise AssertionError("Tokenizer manifest omits tokenizer/config.yaml")
     if not manifest.get("tokenizer_vocabulary_diagnostics"):
         raise AssertionError("Tokenizer vocabulary-hole diagnostics were not recorded")
     diagnostics = manifest["token_diagnostics"]
@@ -685,12 +727,11 @@ def validate_pilot(
     same_order, same_manifest = _load_and_validate_run(same_order_path, "input_order")
     reordered, reordered_manifest = _load_and_validate_run(reordered_path, "reversed")
     manifests = [baseline_manifest, same_manifest, reordered_manifest]
-    if require_pa03_frozen_artifacts and any(
-        manifest["implementation_revision"] != PA03_EXTRACTION_REVISION
-        for manifest in manifests
-    ):
-        raise AssertionError("Frozen pilot extraction revision does not match PA-03")
+    pa03_lineage = None
     if require_pa03_frozen_artifacts:
+        pa03_lineage = _validate_pa03_lineage(
+            manifests, validation_implementation_revision
+        )
         expected_input = Path("audit/pilot/frozen_pilot_v2.csv")
         if not expected_input.is_file():
             raise AssertionError("PA-03 frozen pilot input is missing")
@@ -708,8 +749,12 @@ def validate_pilot(
         "implementation_revision",
         "checkpoint",
         "checkpoint_revision",
+        "checkpoint_snapshot",
         "model_files",
+        "model_total_bytes",
         "tokenizer_files",
+        "tokenizer_loader_warnings",
+        "tokenizer_revision",
         "prompt_prefix",
         "prompt_suffix",
         "hidden_state",
@@ -763,8 +808,7 @@ def validate_pilot(
         "manifest_invariants_verified": invariant_fields,
         "pa03_validation_only_reuse": require_pa03_frozen_artifacts,
         "frozen_artifacts": frozen_artifacts,
-        "extraction_implementation_revision": manifests[0]["implementation_revision"],
-        "validation_implementation_revision": validation_implementation_revision,
+        "pa03_revision_lineage": pa03_lineage,
     }
     write_json(report_path, report)
     return report
@@ -808,8 +852,12 @@ def validate_full_extraction(
         "implementation_revision",
         "checkpoint",
         "checkpoint_revision",
+        "checkpoint_snapshot",
         "model_files",
+        "model_total_bytes",
         "tokenizer_files",
+        "tokenizer_loader_warnings",
+        "tokenizer_revision",
         "prompt_prefix",
         "prompt_suffix",
         "hidden_state",
