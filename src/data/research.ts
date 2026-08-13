@@ -157,7 +157,7 @@ export const phases: Phase[] = [
     ],
     evidence: ["Primary effect figure", "Calibration plots", "Error review", "Reproducible report"],
     stopRule: "No conclusion may outrun the interval, the locked 0.03 benchmark, or the drug-level study scope.",
-    status: "next",
+    status: "cleared",
   },
 ];
 
